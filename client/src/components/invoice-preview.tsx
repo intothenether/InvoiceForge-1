@@ -1,12 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Invoice } from "@shared/schema";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface InvoicePreviewProps {
   invoice: Invoice;
 }
 
 export function InvoicePreview({ invoice }: InvoicePreviewProps) {
+  const { t } = useLanguage();
+  
   const subtotal = invoice.services.reduce((sum, service) => 
     sum + (service.hours * service.rate), 0
   );
@@ -20,8 +23,8 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
     <Card className="w-full">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Invoice Preview</CardTitle>
-          <span className="text-sm text-muted-foreground">Live preview of your invoice</span>
+          <CardTitle>{t.invoicePreview}</CardTitle>
+          <span className="text-sm text-muted-foreground">{t.livePreview}</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -30,14 +33,14 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-2xl font-bold text-foreground" data-testid="text-invoice-title">
-                INVOICE
+                {t.invoice.toUpperCase()}
               </h1>
               <p className="text-muted-foreground mt-1" data-testid="text-invoice-number">
-                Invoice #{invoice.invoiceNumber || "---"}
+                {t.invoice} #{invoice.invoiceNumber || "---"}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Date</p>
+              <p className="text-sm text-muted-foreground">{t.date}</p>
               <p className="font-medium" data-testid="text-invoice-date">
                 {new Date().toLocaleDateString()}
               </p>
@@ -48,7 +51,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
         {/* Client Information */}
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Bill To:</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">{t.billTo}</h3>
             <div className="space-y-1">
               <p className="font-medium" data-testid="text-client-name">
                 {invoice.clientName || "Client Name"}
@@ -59,7 +62,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             </div>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">From:</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">{t.from}</h3>
             <div className="space-y-1">
               <p className="font-medium">Your Business Name</p>
               <p className="text-muted-foreground">your.email@business.com</p>
@@ -72,10 +75,10 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
           <table className="invoice-table">
             <thead>
               <tr>
-                <th className="text-left">Service</th>
-                <th className="text-center">Hours</th>
-                <th className="text-right">Rate</th>
-                <th className="text-right">Total</th>
+                <th className="text-left">{t.service}</th>
+                <th className="text-center">{t.hours}</th>
+                <th className="text-right">{t.rate}</th>
+                <th className="text-right">{t.total}</th>
               </tr>
             </thead>
             <tbody>
@@ -98,21 +101,21 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-border">
-                <td colSpan={3} className="font-semibold text-right">Subtotal:</td>
+                <td colSpan={3} className="font-semibold text-right">{t.subtotal}</td>
                 <td className="text-right font-semibold" data-testid="text-subtotal">
                   ${subtotal.toFixed(2)}
                 </td>
               </tr>
               <tr>
                 <td colSpan={3} className="font-semibold text-right">
-                  Tax ({(invoice.taxRate * 100).toFixed(1)}%):
+                  {t.tax} ({(invoice.taxRate * 100).toFixed(1)}%):
                 </td>
                 <td className="text-right font-semibold" data-testid="text-tax">
                   ${tax.toFixed(2)}
                 </td>
               </tr>
               <tr className="bg-muted">
-                <td colSpan={3} className="font-bold text-right text-lg">Total:</td>
+                <td colSpan={3} className="font-bold text-right text-lg">{t.total}:</td>
                 <td className="text-right font-bold text-lg text-primary" data-testid="text-total">
                   ${total.toFixed(2)}
                 </td>
@@ -123,10 +126,9 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
 
         {/* Payment Terms */}
         <div className="bg-muted/50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-foreground mb-2">Payment Terms</h3>
+          <h3 className="text-sm font-medium text-foreground mb-2">{t.paymentTerms}</h3>
           <p className="text-sm text-muted-foreground">
-            Payment is due within 30 days of invoice date. 
-            Late payments may be subject to a 1.5% monthly service charge.
+            {t.paymentTermsText}
           </p>
         </div>
 
@@ -135,11 +137,11 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
           <div className="flex items-center space-x-2">
             <div className={`w-2 h-2 rounded-full ${isComplete ? 'bg-accent' : 'bg-muted-foreground'}`}></div>
             <span className="text-sm font-medium" data-testid="status-indicator">
-              {isComplete ? "Ready to Generate" : "Incomplete Form"}
+              {isComplete ? t.readyToGenerate : t.incompleteForm}
             </span>
           </div>
           <span className="text-xs text-muted-foreground">
-            {isComplete ? "All fields completed" : "Please fill required fields"}
+            {isComplete ? t.allFieldsCompleted : t.pleaseFillRequiredFields}
           </span>
         </div>
       </CardContent>

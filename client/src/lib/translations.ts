@@ -41,6 +41,7 @@ export interface Translations {
   incompleteForm: string;
   allFieldsCompleted: string;
   pleaseFillFields: string;
+  pleaseFillRequiredFields: string;
   
   // Toast messages
   previewUpdated: string;
@@ -100,6 +101,7 @@ export const translations: Record<Language, Translations> = {
     incompleteForm: "Incomplete Form",
     allFieldsCompleted: "All fields completed",
     pleaseFillFields: "Please fill required fields",
+    pleaseFillRequiredFields: "Please fill required fields",
     
     previewUpdated: "Preview Updated",
     previewUpdatedDesc: "Invoice preview has been updated with your changes.",
@@ -155,6 +157,7 @@ export const translations: Record<Language, Translations> = {
     incompleteForm: "Ofullständig blankett",
     allFieldsCompleted: "Alla fält ifyllda",
     pleaseFillFields: "Vänligen fyll i obligatoriska fält",
+    pleaseFillRequiredFields: "Vänligen fyll i obligatoriska fält",
     
     previewUpdated: "Förhandsgranskning uppdaterad",
     previewUpdatedDesc: "Förhandsvisningen av fakturan har uppdaterats med dina ändringar.",

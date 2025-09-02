@@ -18,7 +18,7 @@ interface InvoiceFormProps {
 
 export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const form = useForm<Invoice>({
     resolver: zodResolver(invoiceSchema),
@@ -64,13 +64,13 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
   const handlePreview = () => {
     if (form.formState.isValid) {
       toast({
-        title: "Preview Updated",
-        description: "Invoice preview has been updated with your changes.",
+        title: t.previewUpdated,
+        description: t.previewUpdatedDesc,
       });
     } else {
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields before previewing.",
+        title: t.validationError,
+        description: t.fillRequiredFields,
         variant: "destructive",
       });
     }
@@ -79,22 +79,22 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
   const handleDownload = () => {
     if (form.formState.isValid) {
       try {
-        generateInvoicePDF(watchedValues);
+        generateInvoicePDF(watchedValues, language);
         toast({
-          title: "PDF Generated",
-          description: "Your invoice has been downloaded successfully.",
+          title: t.pdfGenerated,
+          description: t.downloadSuccessful,
         });
       } catch (error) {
         toast({
-          title: "Download Failed",
-          description: "There was an error generating the PDF. Please try again.",
+          title: t.downloadFailed,
+          description: t.downloadError,
           variant: "destructive",
         });
       }
     } else {
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields before downloading.",
+        title: t.validationError,
+        description: t.fillRequiredFields,
         variant: "destructive",
       });
     }
@@ -106,9 +106,9 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Invoice Details
+            {t.invoiceDetails}
           </CardTitle>
-          <span className="text-sm text-muted-foreground">Fill in service information</span>
+          <span className="text-sm text-muted-foreground">{t.fillServiceInfo}</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -116,7 +116,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
         <div className="space-y-4">
           <div>
             <h3 className="text-md font-medium text-foreground border-b border-border pb-2">
-              Client Information
+              {t.clientInformation}
             </h3>
           </div>
           
@@ -127,7 +127,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                 placeholder=" "
                 data-testid="input-client-name"
               />
-              <Label>Client Name</Label>
+              <Label>{t.clientName}</Label>
               {form.formState.errors.clientName && (
                 <p className="text-destructive text-sm mt-1">
                   {form.formState.errors.clientName.message}
@@ -142,7 +142,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                 placeholder=" "
                 data-testid="input-client-email"
               />
-              <Label>Client Email</Label>
+              <Label>{t.clientEmail}</Label>
               {form.formState.errors.clientEmail && (
                 <p className="text-destructive text-sm mt-1">
                   {form.formState.errors.clientEmail.message}
@@ -157,7 +157,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
               placeholder=" "
               data-testid="input-invoice-number"
             />
-            <Label>Invoice Number</Label>
+            <Label>{t.invoiceNumber}</Label>
             {form.formState.errors.invoiceNumber && (
               <p className="text-destructive text-sm mt-1">
                 {form.formState.errors.invoiceNumber.message}
@@ -172,7 +172,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-md font-medium text-foreground border-b border-border pb-2 flex-1">
-              Services
+              {t.services}
             </h3>
             <Button
               type="button"
@@ -183,7 +183,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
               data-testid="button-add-service"
             >
               <Plus className="h-4 w-4" />
-              Add Service
+              {t.addService}
             </Button>
           </div>
 
@@ -213,7 +213,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                   placeholder=" "
                   data-testid={`input-service-name-${index}`}
                 />
-                <Label>Service Name</Label>
+                <Label>{t.serviceName}</Label>
                 {form.formState.errors.services?.[index]?.name && (
                   <p className="text-destructive text-sm mt-1">
                     {form.formState.errors.services[index]?.name?.message}
@@ -233,7 +233,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                     placeholder=" "
                     data-testid={`input-service-hours-${index}`}
                   />
-                  <Label>Hours</Label>
+                  <Label>{t.hours}</Label>
                   {form.formState.errors.services?.[index]?.hours && (
                     <p className="text-destructive text-sm mt-1">
                       {form.formState.errors.services[index]?.hours?.message}
@@ -252,7 +252,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                     placeholder=" "
                     data-testid={`input-service-rate-${index}`}
                   />
-                  <Label>Rate ($)</Label>
+                  <Label>{t.rate}</Label>
                   {form.formState.errors.services?.[index]?.rate && (
                     <p className="text-destructive text-sm mt-1">
                       {form.formState.errors.services[index]?.rate?.message}
@@ -269,7 +269,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                     placeholder=" "
                     data-testid={`text-service-total-${index}`}
                   />
-                  <Label>Total</Label>
+                  <Label>{t.total}</Label>
                 </div>
               </div>
             </div>
@@ -287,7 +287,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
             data-testid="button-preview-invoice"
           >
             <Eye className="h-4 w-4" />
-            Preview Invoice
+            {t.previewInvoice}
           </Button>
           
           <Button
@@ -297,7 +297,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
             data-testid="button-download-pdf"
           >
             <Download className="h-4 w-4" />
-            Download PDF
+            {t.downloadPDF}
           </Button>
         </div>
       </CardContent>
