@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { invoiceSchema, type Invoice } from "@shared/schema";
 import { generateInvoicePDF } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface InvoiceFormProps {
   onInvoiceChange: (invoice: Invoice) => void;
@@ -17,6 +18,7 @@ interface InvoiceFormProps {
 
 export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const form = useForm<Invoice>({
     resolver: zodResolver(invoiceSchema),
@@ -42,7 +44,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
     if (form.formState.isValid) {
       onInvoiceChange(watchedValues);
     }
-  }, [watchedValues, form.formState.isValid, onInvoiceChange]);
+  }, [JSON.stringify(watchedValues), form.formState.isValid, onInvoiceChange]);
 
   const addService = () => {
     append({ 

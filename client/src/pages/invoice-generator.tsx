@@ -2,9 +2,13 @@ import { useState } from "react";
 import { FileText } from "lucide-react";
 import { InvoiceForm } from "@/components/invoice-form";
 import { InvoicePreview } from "@/components/invoice-preview";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Invoice } from "@shared/schema";
 
 export default function InvoiceGenerator() {
+  const { t } = useLanguage();
+  
   const [invoice, setInvoice] = useState<Invoice>({
     invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
     clientName: "",
@@ -28,11 +32,12 @@ export default function InvoiceGenerator() {
                 <FileText className="h-4 w-4 text-primary-foreground" />
               </div>
               <h1 className="text-xl font-semibold text-foreground" data-testid="text-app-title">
-                Invoice Generator Pro
+                {t.appTitle}
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">Professional Invoice Creation</span>
+              <span className="text-sm text-muted-foreground">{t.appSubtitle}</span>
+              <LanguageSelector />
             </div>
           </div>
         </div>
@@ -62,12 +67,12 @@ export default function InvoiceGenerator() {
                 <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
                   <FileText className="h-3 w-3 text-primary-foreground" />
                 </div>
-                <span className="text-sm font-medium text-foreground">Invoice Generator Pro</span>
+                <span className="text-sm font-medium text-foreground">{t.appTitle}</span>
               </div>
-              <span className="text-sm text-muted-foreground">Professional invoice creation made simple</span>
+              <span className="text-sm text-muted-foreground">{t.tagline}</span>
             </div>
             <div className="flex items-center space-x-6">
-              <span className="text-sm text-muted-foreground">© 2024 Invoice Generator Pro</span>
+              <span className="text-sm text-muted-foreground">{t.copyright}</span>
             </div>
           </div>
         </div>
