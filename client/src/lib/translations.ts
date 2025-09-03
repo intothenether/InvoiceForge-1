@@ -57,6 +57,15 @@ export interface Translations {
   copyright: string;
   tagline: string;
   
+  // Client Selection
+  clientSelection: string;
+  selectExistingClient: string;
+  searchClients: string;
+  noClientsFound: string;
+  addNewClient: string;
+  hideDeleteButtons: string;
+  showDeleteButtons: string;
+  
   // Language
   language: string;
   english: string;
@@ -115,6 +124,14 @@ export const translations: Record<Language, Translations> = {
     copyright: "© 2024 Invoice Generator Pro",
     tagline: "Professional invoice creation made simple",
     
+    clientSelection: "Client Selection",
+    selectExistingClient: "Select existing client or enter new",
+    searchClients: "Search clients...",
+    noClientsFound: "No clients found.",
+    addNewClient: "Add new client",
+    hideDeleteButtons: "Hide delete buttons",
+    showDeleteButtons: "Show delete buttons",
+    
     language: "Language",
     english: "English",
     swedish: "Swedish"
@@ -170,6 +187,14 @@ export const translations: Record<Language, Translations> = {
     
     copyright: "© 2024 Faktura Generator Pro",
     tagline: "Professionell fakturaframställning gjord enkelt",
+    
+    clientSelection: "Kundval",
+    selectExistingClient: "Välj befintlig kund eller ange ny",
+    searchClients: "Sök kunder...",
+    noClientsFound: "Inga kunder hittades.",
+    addNewClient: "Lägg till ny kund",
+    hideDeleteButtons: "Dölj raderingsknapparna",
+    showDeleteButtons: "Visa raderingsknapparna",
     
     language: "Språk",
     english: "Engelska",

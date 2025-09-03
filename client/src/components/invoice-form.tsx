@@ -11,6 +11,8 @@ import { invoiceSchema, type Invoice } from "@shared/schema";
 import { generateInvoicePDF } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ClientSelector } from "@/components/client-selector";
+import { ClientStorage } from "@/lib/client-storage";
 
 interface InvoiceFormProps {
   onInvoiceChange: (invoice: Invoice) => void;
@@ -58,6 +60,17 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
   const removeService = (index: number) => {
     if (fields.length > 1) {
       remove(index);
+    }
+  };
+
+  const handleClientSelect = (client: { name: string; email: string }) => {
+    form.setValue("clientName", client.name);
+    form.setValue("clientEmail", client.email);
+  };
+
+  const handleClientSave = (name: string, email: string) => {
+    if (name.trim() && email.trim()) {
+      ClientStorage.saveClient(name, email);
     }
   };
 
@@ -120,6 +133,15 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
             </h3>
           </div>
           
+
+          <ClientSelector
+            selectedClient={{
+              name: watchedValues.clientName,
+              email: watchedValues.clientEmail
+            }}
+            onClientSelect={handleClientSelect}
+            onClientSave={handleClientSave}
+          />
           <div className="grid grid-cols-2 gap-4">
             <div className="floating-label-input">
               <Input
