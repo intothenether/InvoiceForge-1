@@ -10,14 +10,24 @@ interface InvoicePreviewProps {
 export function InvoicePreview({ invoice }: InvoicePreviewProps) {
   const { t } = useLanguage();
   
-  const subtotal = invoice.services.reduce((sum, service) => 
-    sum + (service.hours * service.rate), 0
-  );
+  const subtotal = invoice.services.reduce((sum, service) => {
+    if (service.type === "fixed") {
+      return sum + (service.total || 0);
+    } else {
+      return sum + ((service.hours || 0) * (service.rate || 0));
+    }
+  }, 0);
   const tax = subtotal * invoice.taxRate;
   const total = subtotal + tax;
 
   const isComplete = invoice.clientName && invoice.clientEmail && 
-    invoice.invoiceNumber && invoice.services.every(s => s.name && s.hours > 0 && s.rate > 0);
+    invoice.invoiceNumber && invoice.services.every(s => {
+      if (s.type === "fixed") {
+        return s.name && s.total && s.total > 0;
+      } else {
+        return s.name && s.hours && s.hours > 0 && s.rate && s.rate > 0;
+      }
+    });
 
   return (
     <Card className="w-full">
@@ -76,8 +86,8 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             <thead>
               <tr>
                 <th className="text-left">{t.service}</th>
-                <th className="text-center">{t.hours}</th>
-                <th className="text-right">{t.rate}</th>
+                <th className="text-center">Type</th>
+                <th className="text-center">Details</th>
                 <th className="text-right">{t.total}</th>
               </tr>
             </thead>
@@ -87,14 +97,27 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
                   <td className="font-medium" data-testid={`text-service-name-${index}`}>
                     {service.name || "Service Name"}
                   </td>
-                  <td className="text-center" data-testid={`text-service-hours-${index}`}>
-                    {service.hours || 0}
+                  <td className="text-center" data-testid={`text-service-type-${index}`}>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      service.type === "fixed" 
+                        ? "bg-blue-100 text-blue-800" 
+                        : "bg-green-100 text-green-800"
+                    }`}>
+                      {service.type === "fixed" ? "Fixed" : "Hourly"}
+                    </span>
                   </td>
-                  <td className="text-right" data-testid={`text-service-rate-${index}`}>
-                    ${(service.rate || 0).toFixed(2)}
+                  <td className="text-center" data-testid={`text-service-details-${index}`}>
+                    {service.type === "fixed" 
+                      ? "Fixed Price"
+                      : `${service.hours || 0}h × $${(service.rate || 0).toFixed(2)}`
+                    }
                   </td>
                   <td className="text-right font-medium" data-testid={`text-service-total-${index}`}>
-                    ${((service.hours || 0) * (service.rate || 0)).toFixed(2)}
+                    ${
+                      service.type === "fixed" 
+                        ? (service.total || 0).toFixed(2)
+                        : ((service.hours || 0) * (service.rate || 0)).toFixed(2)
+                    }
                   </td>
                 </tr>
               ))}

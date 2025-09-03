@@ -34,21 +34,33 @@ export function generateInvoicePDF(invoice: Invoice, language: Language = 'en'):
   doc.text(invoice.clientEmail, 20, 72);
   
   // Calculate totals
-  const subtotal = invoice.services.reduce((sum, service) => sum + (service.hours * service.rate), 0);
+  const subtotal = invoice.services.reduce((sum, service) => {
+    if (service.type === 'fixed') {
+      return sum + (service.total || 0);
+    } else {
+      return sum + ((service.hours || 0) * (service.rate || 0));
+    }
+  }, 0);
   const tax = subtotal * invoice.taxRate;
   const total = subtotal + tax;
   
   // Services table
   const tableData = invoice.services.map(service => [
     service.name,
-    service.hours.toString(),
-    `$${service.rate.toFixed(2)}`,
-    `$${(service.hours * service.rate).toFixed(2)}`
+    service.type === 'fixed' ? 'Fixed Price' : `${service.hours || 0} hrs`,
+    service.type === 'fixed' 
+      ? 'N/A' 
+      : `${language === 'sv' ? '' : '$'}${(service.rate || 0).toFixed(2)}${language === 'sv' ? ' kr' : ''}`,
+    `${language === 'sv' ? '' : '$'}${(
+      service.type === 'fixed' 
+        ? (service.total || 0) 
+        : ((service.hours || 0) * (service.rate || 0))
+    ).toFixed(2)}${language === 'sv' ? ' kr' : ''}`
   ]);
   
   autoTable(doc, {
     startY: 85,
-    head: [[t.service, t.hours, language === 'sv' ? 'Timpris (kr)' : 'Rate ($)', t.total]],
+    head: [[t.service, 'Type/Hours', language === 'sv' ? 'Timpris (kr)' : 'Rate ($)', t.total]],
     body: tableData,
     foot: [
       ['', '', `${t.subtotal}`, `${language === 'sv' ? '' : '$'}${subtotal.toFixed(2)}${language === 'sv' ? ' kr' : ''}`],

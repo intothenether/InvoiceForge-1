@@ -57,6 +57,13 @@ export interface Translations {
   copyright: string;
   tagline: string;
   
+  // Service Types
+  serviceType: string;
+  hourlyService: string;
+  fixedService: string;
+  fixedTotal: string;
+  taxRateLabel: string;
+  
   // Client Selection
   clientSelection: string;
   selectExistingClient: string;
@@ -124,6 +131,12 @@ export const translations: Record<Language, Translations> = {
     copyright: "© 2024 Invoice Generator Pro",
     tagline: "Professional invoice creation made simple",
     
+    serviceType: "Service Type",
+    hourlyService: "Hourly Service",
+    fixedService: "Fixed Price Service",
+    fixedTotal: "Fixed Total",
+    taxRateLabel: "Tax Rate",
+    
     clientSelection: "Client Selection",
     selectExistingClient: "Select existing client or enter new",
     searchClients: "Search clients...",
@@ -187,6 +200,12 @@ export const translations: Record<Language, Translations> = {
     
     copyright: "© 2024 Faktura Generator Pro",
     tagline: "Professionell fakturaframställning gjord enkelt",
+    
+    serviceType: "Tjänsttyp",
+    hourlyService: "Timtjänst",
+    fixedService: "Fast pris tjänst",
+    fixedTotal: "Fast totalt",
+    taxRateLabel: "Momssats",
     
     clientSelection: "Kundval",
     selectExistingClient: "Välj befintlig kund eller ange ny",

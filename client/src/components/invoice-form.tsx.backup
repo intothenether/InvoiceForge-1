@@ -245,136 +245,62 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                   </p>
                 )}
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <Label htmlFor={`service-type-${index}`} className="text-sm font-medium">
-                  {t.serviceType}:
-                </Label>
-                <Switch
-                  id={`service-type-${index}`}
-                  checked={watchedValues.services[index]?.type === "fixed"}
-                  onCheckedChange={(checked) => {
-                    form.setValue(`services.${index}.type` as const, checked ? "fixed" : "hourly");
-                    if (checked) {
-                      form.setValue(`services.${index}.hours` as const, undefined);
-                      form.setValue(`services.${index}.rate` as const, undefined);
-                    } else {
-                      form.setValue(`services.${index}.total` as const, undefined);
-                    }
-                  }}
-                  data-testid={`switch-service-type-${index}`}
-                />
-                <Label htmlFor={`service-type-${index}`} className="text-sm">
-                  {watchedValues.services[index]?.type === "fixed" ? t.fixedService : t.hourlyService}
-                </Label>
-              </div>
 
-              {watchedValues.services[index]?.type === "hourly" ? (
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="floating-label-input">
-                    <Input
-                      {...form.register(`services.${index}.hours` as const, {
-                        valueAsNumber: true,
-                      })}
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      placeholder=" "
-                      data-testid={`input-service-hours-${index}`}
-                    />
-                    <Label>{t.hours}</Label>
-                    {form.formState.errors.services?.[index]?.hours && (
-                      <p className="text-destructive text-sm mt-1">
-                        {form.formState.errors.services[index]?.hours?.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="floating-label-input">
-                    <Input
-                      {...form.register(`services.${index}.rate` as const, {
-                        valueAsNumber: true,
-                      })}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder=" "
-                      data-testid={`input-service-rate-${index}`}
-                    />
-                    <Label>{t.rate}</Label>
-                    {form.formState.errors.services?.[index]?.rate && (
-                      <p className="text-destructive text-sm mt-1">
-                        {form.formState.errors.services[index]?.rate?.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="floating-label-input">
-                    <Input
-                      type="text"
-                      value={`$${((watchedValues.services[index]?.hours || 0) * (watchedValues.services[index]?.rate || 0)).toFixed(2)}`}
-                      readOnly
-                      className="bg-muted text-muted-foreground cursor-not-allowed"
-                      placeholder=" "
-                      data-testid={`text-service-total-${index}`}
-                    />
-                    <Label>{t.total}</Label>
-                  </div>
-                </div>
-              ) : (
+              <div className="grid grid-cols-3 gap-4">
                 <div className="floating-label-input">
                   <Input
-                    {...form.register(`services.${index}.total` as const, {
+                    {...form.register(`services.${index}.hours` as const, {
+                      valueAsNumber: true,
+                    })}
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    placeholder=" "
+                    data-testid={`input-service-hours-${index}`}
+                  />
+                  <Label>{t.hours}</Label>
+                  {form.formState.errors.services?.[index]?.hours && (
+                    <p className="text-destructive text-sm mt-1">
+                      {form.formState.errors.services[index]?.hours?.message}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="floating-label-input">
+                  <Input
+                    {...form.register(`services.${index}.rate` as const, {
                       valueAsNumber: true,
                     })}
                     type="number"
                     step="0.01"
                     min="0"
                     placeholder=" "
-                    data-testid={`input-service-total-${index}`}
+                    data-testid={`input-service-rate-${index}`}
                   />
-                  <Label>{t.fixedTotal}</Label>
-                  {form.formState.errors.services?.[index]?.total && (
+                  <Label>{t.rate}</Label>
+                  {form.formState.errors.services?.[index]?.rate && (
                     <p className="text-destructive text-sm mt-1">
-                      {form.formState.errors.services[index]?.total?.message}
+                      {form.formState.errors.services[index]?.rate?.message}
                     </p>
                   )}
                 </div>
-              )}
+                
+                <div className="floating-label-input">
+                  <Input
+                    type="text"
+                    value={`$${((watchedValues.services[index]?.hours || 0) * (watchedValues.services[index]?.rate || 0)).toFixed(2)}`}
+                    readOnly
+                    className="bg-muted text-muted-foreground cursor-not-allowed"
+                    placeholder=" "
+                    data-testid={`text-service-total-${index}`}
+                  />
+                  <Label>{t.total}</Label>
+                </div>
+              </div>
             </div>
           ))}
         </div>
 
-
-        <Separator />
-
-        {/* Tax Rate Section */}
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="taxRate" className="text-md font-medium text-foreground">
-              {t.taxRateLabel}
-            </Label>
-          </div>
-          <div className="w-full max-w-xs">
-            <Select
-              value={(watchedValues.taxRate * 100).toString()}
-              onValueChange={(value) => {
-                form.setValue("taxRate", parseFloat(value) / 100);
-              }}
-            >
-              <SelectTrigger data-testid="select-tax-rate">
-                <SelectValue placeholder={t.taxRateLabel} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">0% (Tax Free)</SelectItem>
-                <SelectItem value="6">6%</SelectItem>
-                <SelectItem value="12">12%</SelectItem>
-                <SelectItem value="20">20%</SelectItem>
-                <SelectItem value="25">25% (Default)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
         <Separator />
 
         {/* Action Buttons */}
