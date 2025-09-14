@@ -9,13 +9,12 @@ const labelVariants = cva(
 )
 
 const Label = React.forwardRef<
-  React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
-    VariantProps<typeof labelVariants>
+  HTMLLabelElement,
+  React.LabelHTMLAttributes<HTMLLabelElement>
 >(({ className, ...props }, ref) => (
-  <LabelPrimitive.Root
+  <label
     ref={ref}
-    className={cn(labelVariants(), className)}
+    className={cn("text-xs font-medium", className)} // Add your desired font size here
     {...props}
   />
 ))

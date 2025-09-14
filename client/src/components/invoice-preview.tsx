@@ -29,6 +29,13 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
       }
     });
 
+  const formatDate = (date: Date) => {
+    const d = date.getDate().toString().padStart(2, '0');
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const y = date.getFullYear();
+    return `${d}/${m}/${y}`;
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -52,7 +59,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             <div className="text-right">
               <p className="text-sm text-muted-foreground">{t.date}</p>
               <p className="font-medium" data-testid="text-invoice-date">
-                {new Date().toLocaleDateString()}
+                {formatDate(new Date())}
               </p>
             </div>
           </div>
@@ -74,8 +81,8 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-2">{t.from}</h3>
             <div className="space-y-1">
-              <p className="font-medium">Your Business Name</p>
-              <p className="text-muted-foreground">your.email@business.com</p>
+              <p className="font-medium">{t.businessName}</p>
+              <p className="text-muted-foreground">{t.businessEmail}</p>
             </div>
           </div>
         </div>
@@ -86,8 +93,8 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             <thead>
               <tr>
                 <th className="text-left">{t.service}</th>
-                <th className="text-center">Type</th>
-                <th className="text-center">Details</th>
+                <th className="text-center">{t.serviceType}</th>
+                <th className="text-center">{t.comment}</th>
                 <th className="text-right">{t.total}</th>
               </tr>
             </thead>
@@ -109,15 +116,15 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
                   <td className="text-center" data-testid={`text-service-details-${index}`}>
                     {service.type === "fixed" 
                       ? "Fixed Price"
-                      : `${service.hours || 0}h × $${(service.rate || 0).toFixed(2)}`
+                      : `${service.hours || 0}h × ${(service.rate || 0).toFixed(2)} kr`
                     }
                   </td>
                   <td className="text-right font-medium" data-testid={`text-service-total-${index}`}>
-                    ${
+                    {
                       service.type === "fixed" 
                         ? (service.total || 0).toFixed(2)
                         : ((service.hours || 0) * (service.rate || 0)).toFixed(2)
-                    }
+                    } kr
                   </td>
                 </tr>
               ))}
@@ -126,7 +133,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
               <tr className="border-t-2 border-border">
                 <td colSpan={3} className="font-semibold text-right">{t.subtotal}</td>
                 <td className="text-right font-semibold" data-testid="text-subtotal">
-                  ${subtotal.toFixed(2)}
+                  {subtotal.toFixed(2)} kr
                 </td>
               </tr>
               <tr>
@@ -134,13 +141,13 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
                   {t.tax} ({(invoice.taxRate * 100).toFixed(1)}%):
                 </td>
                 <td className="text-right font-semibold" data-testid="text-tax">
-                  ${tax.toFixed(2)}
+                  {tax.toFixed(2)} kr
                 </td>
               </tr>
               <tr className="bg-muted">
                 <td colSpan={3} className="font-bold text-right text-lg">{t.total}:</td>
                 <td className="text-right font-bold text-lg text-primary" data-testid="text-total">
-                  ${total.toFixed(2)}
+                  {total.toFixed(2)} kr
                 </td>
               </tr>
             </tfoot>
@@ -148,12 +155,12 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
         </div>
 
         {/* Payment Terms */}
-        <div className="bg-muted/50 rounded-lg p-4">
+        {/*<div className="bg-muted/50 rounded-lg p-4">
           <h3 className="text-sm font-medium text-foreground mb-2">{t.paymentTerms}</h3>
           <p className="text-sm text-muted-foreground">
             {t.paymentTermsText}
           </p>
-        </div>
+        </div>*/}
 
         {/* Status Indicator */}
         <div className="flex items-center justify-between p-4 bg-accent/10 rounded-lg border border-accent/20">

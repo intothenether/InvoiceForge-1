@@ -19,9 +19,9 @@ import { ClientStorage, SavedClient } from "@/lib/client-storage";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ClientSelectorProps {
-  selectedClient?: { name: string; email: string };
-  onClientSelect: (client: { name: string; email: string }) => void;
-  onClientSave: (name: string, email: string) => void;
+  selectedClient?: { name: string; email: string, personnumber: string, address: string };
+  onClientSelect: (client: { name: string; email: string, personnumber: string, address: string }) => void;
+  onClientSave: (name: string, email: string, personnumber: string, address: string) => void;
 }
 
 export function ClientSelector({
@@ -44,8 +44,7 @@ export function ClientSelector({
   };
 
   const handleClientSelect = (client: SavedClient) => {
-    onClientSelect({ name: client.name, email: client.email });
-    ClientStorage.saveClient(client.name, client.email); // Update last used
+    onClientSelect({ name: client.name, email: client.email, personnumber: client.personnumber, address: client.address });
     loadClients(); // Refresh the list
     setOpen(false);
   };
@@ -57,7 +56,8 @@ export function ClientSelector({
   };
 
   const handleNewClient = () => {
-    onClientSelect({ name: "", email: "" });
+    onClientSelect({ name: "", email: "", personnumber: "", address: "" });
+    onClientSave("", "", "", "");
     setOpen(false);
   };
 

@@ -8,13 +8,15 @@ import { Invoice } from "@shared/schema";
 
 export default function InvoiceGenerator() {
   const { t } = useLanguage();
-  
+
   const [invoice, setInvoice] = useState<Invoice>({
     invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
     clientName: "",
     clientEmail: "",
-    services: [{ id: "1", name: "", hours: 0, rate: 0 }],
-    taxRate: 0.085,
+    services: [{ id: "1", name: "", type: "hourly", hours: 0, rate: 0 }],
+    taxRate: 0.25,
+    clientPersonnumber: "",
+    clientAddress: ""
   });
 
   const handleInvoiceChange = (updatedInvoice: Invoice) => {

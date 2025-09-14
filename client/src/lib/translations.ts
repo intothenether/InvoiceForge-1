@@ -11,6 +11,9 @@ export interface Translations {
   clientInformation: string;
   clientName: string;
   clientEmail: string;
+  clientPersonnumber: string;
+  clientAddress: string;
+  comment: string;
   invoiceNumber: string;
   services: string;
   addService: string;
@@ -32,7 +35,11 @@ export interface Translations {
   from: string;
   businessName: string;
   businessEmail: string;
+  businessMomsregnr: string;
+  businessPhone: string;
+  businessPlusgiro: string;
   service: string;
+  skatterabatt: string;
   subtotal: string;
   tax: string;
   paymentTerms: string;
@@ -81,14 +88,17 @@ export interface Translations {
 
 export const translations: Record<Language, Translations> = {
   en: {
-    appTitle: "Invoice Generator Pro",
-    appSubtitle: "Professional Invoice Creation",
+    appTitle: "Facio",
+    appSubtitle: "Invoice Creation",
     
     invoiceDetails: "Invoice Details",
     fillServiceInfo: "Fill in service information",
     clientInformation: "Client Information",
     clientName: "Client Name",
     clientEmail: "Client Email",
+    clientPersonnumber: "Client Personnr.",
+    clientAddress: "Client Address",
+    comment: "Details",
     invoiceNumber: "Invoice Number",
     services: "Services",
     addService: "Add Service",
@@ -106,9 +116,13 @@ export const translations: Record<Language, Translations> = {
     date: "Date",
     billTo: "Bill To:",
     from: "From:",
-    businessName: "Your Business Name",
-    businessEmail: "your.email@business.com",
+    businessName: "Reginastads",
+    businessEmail: "reginasfirma@gmail.com",
+    businessMomsregnr: "SE 650907284601",
+    businessPhone: "0737705714",
+    businessPlusgiro: "509014-7",
     service: "Service",
+    skatterabatt: "Skatterabatt",
     subtotal: "Subtotal:",
     tax: "Tax",
     paymentTerms: "Payment Terms",
@@ -128,8 +142,8 @@ export const translations: Record<Language, Translations> = {
     downloadFailed: "Download Failed",
     downloadError: "There was an error generating the PDF. Please try again.",
     
-    copyright: "© 2024 Invoice Generator Pro",
-    tagline: "Professional invoice creation made simple",
+    copyright: "© 2025 Facio",
+    tagline: "Invoice creation made simple",
     
     serviceType: "Service Type",
     hourlyService: "Hourly Service",
@@ -151,21 +165,24 @@ export const translations: Record<Language, Translations> = {
   },
   
   sv: {
-    appTitle: "Faktura Generator Pro",
-    appSubtitle: "Professionell Fakturaframställning",
+    appTitle: "Facio",
+    appSubtitle: "Fakturaframställning",
     
     invoiceDetails: "Fakturadetaljer",
     fillServiceInfo: "Fyll i tjänstinformation",
     clientInformation: "Kundinformation",
     clientName: "Kundnamn",
     clientEmail: "Kundens E-post",
+    clientPersonnumber: "Kundens Personnr.",
+    clientAddress: "Kundens Adress",
+    comment: "Anmmärkning",
     invoiceNumber: "Fakturanummer",
     services: "Tjänster",
     addService: "Lägg till tjänst",
     serviceName: "Tjänstens namn",
     hours: "Timmar",
     rate: "Timpris (kr)",
-    total: "Totalt",
+    total: "Summa",
     
     previewInvoice: "Förhandsgranska faktura",
     downloadPDF: "Ladda ner PDF",
@@ -176,9 +193,13 @@ export const translations: Record<Language, Translations> = {
     date: "Datum",
     billTo: "Faktureras till:",
     from: "Från:",
-    businessName: "Ditt företagsnamn",
-    businessEmail: "din.epost@foretag.se",
+    businessName: "Reginastads",
+    businessEmail: "reginasfirma@gmail.com",
+    businessMomsregnr: "SE 650907284601",
+    businessPhone: "0737705714",
+    businessPlusgiro: "509014-7",
     service: "Tjänst",
+    skatterabatt: "Skatterabatt",
     subtotal: "Delsumma:",
     tax: "Moms",
     paymentTerms: "Betalningsvillkor",
@@ -194,12 +215,12 @@ export const translations: Record<Language, Translations> = {
     validationError: "Valideringsfel",
     fillRequiredFields: "Vänligen fyll i alla obligatoriska fält innan förhandsgranskning.",
     pdfGenerated: "PDF skapad",
-    downloadSuccessful: "Din faktura har laddats ner framgångsrikt.",
-    downloadFailed: "Nedladdning misslyckades",
+    downloadSuccessful: "Din faktura har laddats ned!",
+    downloadFailed: "Nedladdningen misslyckades.",
     downloadError: "Ett fel uppstod när PDF:en skulle skapas. Vänligen försök igen.",
     
-    copyright: "© 2024 Faktura Generator Pro",
-    tagline: "Professionell fakturaframställning gjord enkelt",
+    copyright: "© 2025 Facio",
+    tagline: "Enkel fakturaframställning",
     
     serviceType: "Tjänsttyp",
     hourlyService: "Timtjänst",

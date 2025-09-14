@@ -1,0 +1,620 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Generator Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                }
+            }
+        }
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(0 0% 100%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(210 100% 56%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(210 20% 98%);
+            --secondary-foreground: hsl(222.2 47.4% 11.2%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(142 71% 45%);
+            --accent-foreground: hsl(210 40% 98%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(215 20.2% 65.1%);
+            --radius: 0.5rem;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .invoice-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .invoice-table th,
+        .invoice-table td {
+            border: 1px solid hsl(214.3 31.8% 91.4%);
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .invoice-table th {
+            background-color: hsl(210 20% 98%);
+            font-weight: 600;
+        }
+        
+        .invoice-table tbody tr:hover {
+            background-color: hsl(210 40% 98%);
+        }
+        
+        .form-group {
+            position: relative;
+        }
+        
+        .floating-label {
+            position: absolute;
+            left: 12px;
+            top: 16px;
+            background: white;
+            padding: 0 4px;
+            color: hsl(215.4 16.3% 46.9%);
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+        
+        .form-input:focus + .floating-label,
+        .form-input:not(:placeholder-shown) + .floating-label {
+            top: -8px;
+            font-size: 12px;
+            color: hsl(210 100% 56%);
+        }
+        
+        .btn-primary {
+            background: hsl(210 100% 56%);
+            color: white;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            background: hsl(210 100% 50%);
+            box-shadow: 0 4px 12px hsla(210 100% 56% / 0.3);
+        }
+        
+        .btn-secondary {
+            background: hsl(210 20% 98%);
+            color: hsl(222.2 47.4% 11.2%);
+            border: 1px solid hsl(214.3 31.8% 91.4%);
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: hsl(210 40% 96%);
+        }
+        
+        .btn-success {
+            background: hsl(142 71% 45%);
+            color: white;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-success:hover {
+            background: hsl(142 71% 40%);
+            box-shadow: 0 4px 12px hsla(142 71% 45% / 0.3);
+        }
+        
+        .error-text {
+            color: hsl(0 84.2% 60.2%);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        .success-text {
+            color: hsl(142 71% 45%);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .form-section,
+            .preview-section {
+                width: 100%;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-background text-foreground">
+    <!-- @COMPONENT: Header -->
+    <header class="bg-card border-b border-border shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-file-invoice text-primary-foreground text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-semibold text-foreground">Invoice Generator Pro</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-muted-foreground">Professional Invoice Creation</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- @COMPONENT: MainContainer -->
+        <div class="main-container flex gap-8">
+            <!-- @COMPONENT: FormSection -->
+            <div class="form-section w-1/2">
+                <div class="bg-card rounded-lg border border-border shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold text-foreground">Invoice Details</h2>
+                        <span class="text-sm text-muted-foreground">Fill in service information</span>
+                    </div>
+
+                    <!-- @COMPONENT: InvoiceInfoForm -->
+                    <form class="space-y-6" data-implementation="Use React Hook Form for form handling">
+                        <!-- Client Information -->
+                        <div class="space-y-4">
+                            <h3 class="text-md font-medium text-foreground border-b border-border pb-2">Client Information</h3>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <input 
+                                        type="text" 
+                                        placeholder=" " 
+                                        class="form-input w-full px-3 py-4 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                        data-bind="clientName"
+                                        data-mock="true"
+                                    />
+                                    <label class="floating-label">Client Name</label>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <input 
+                                        type="email" 
+                                        placeholder=" " 
+                                        class="form-input w-full px-3 py-4 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                        data-bind="clientEmail"
+                                        data-mock="true"
+                                    />
+                                    <label class="floating-label">Client Email</label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <input 
+                                    type="text" 
+                                    placeholder=" " 
+                                    class="form-input w-full px-3 py-4 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                    data-bind="invoiceNumber"
+                                    data-mock="true"
+                                />
+                                <label class="floating-label">Invoice Number</label>
+                            </div>
+                        </div>
+
+                        <!-- Services Section -->
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-md font-medium text-foreground border-b border-border pb-2 flex-1">Services</h3>
+                                <button 
+                                    type="button" 
+                                    class="btn-secondary px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-2"
+                                    data-event="click:addService"
+                                    data-mock="true"
+                                >
+                                    <i class="fas fa-plus text-xs"></i>
+                                    <span>Add Service</span>
+                                </button>
+                            </div>
+
+                            <!-- @MAP: services.map(service => ( -->
+                            <div class="bg-muted/50 rounded-lg p-4 space-y-4" data-mock="true">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-muted-foreground">Service #1</span>
+                                    <button 
+                                        type="button" 
+                                        class="text-destructive hover:text-destructive/80 text-sm"
+                                        data-event="click:removeService"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <input 
+                                        type="text" 
+                                        placeholder=" " 
+                                        class="form-input w-full px-3 py-4 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                        data-bind="service.name"
+                                        value="Web Development"
+                                        data-mock="true"
+                                    />
+                                    <label class="floating-label">Service Name</label>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="form-group">
+                                        <input 
+                                            type="number" 
+                                            placeholder=" " 
+                                            class="form-input w-full px-3 py-4 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                            data-bind="service.hours"
+                                            value="40"
+                                            data-mock="true"
+                                        />
+                                        <label class="floating-label">Hours</label>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <input 
+                                            type="number" 
+                                            placeholder=" " 
+                                            class="form-input w-full px-3 py-4 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                            data-bind="service.rate"
+                                            value="75"
+                                            data-mock="true"
+                                        />
+                                        <label class="floating-label">Rate ($)</label>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <input 
+                                            type="text" 
+                                            placeholder=" " 
+                                            class="form-input w-full px-3 py-4 border border-input rounded-md bg-muted text-muted-foreground cursor-not-allowed"
+                                            value="$3,000.00"
+                                            readonly
+                                            data-bind="service.total"
+                                            data-mock="true"
+                                        />
+                                        <label class="floating-label">Total</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Second Service Example -->
+                            <div class="bg-muted/50 rounded-lg p-4 space-y-4" data-mock="true">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-muted-foreground">Service #2</span>
+                                    <button 
+                                        type="button" 
+                                        class="text-destructive hover:text-destructive/80 text-sm"
+                                        data-event="click:removeService"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <input 
+                                        type="text" 
+                                        placeholder=" " 
+                                        class="form-input w-full px-3 py-4 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                        value="UI/UX Design"
+                                        data-mock="true"
+                                    />
+                                    <label class="floating-label">Service Name</label>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="form-group">
+                                        <input 
+                                            type="number" 
+                                            placeholder=" " 
+                                            class="form-input w-full px-3 py-4 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                            value="20"
+                                            data-mock="true"
+                                        />
+                                        <label class="floating-label">Hours</label>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <input 
+                                            type="number" 
+                                            placeholder=" " 
+                                            class="form-input w-full px-3 py-4 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                            value="85"
+                                            data-mock="true"
+                                        />
+                                        <label class="floating-label">Rate ($)</label>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <input 
+                                            type="text" 
+                                            placeholder=" " 
+                                            class="form-input w-full px-3 py-4 border border-input rounded-md bg-muted text-muted-foreground cursor-not-allowed"
+                                            value="$1,700.00"
+                                            readonly
+                                            data-mock="true"
+                                        />
+                                        <label class="floating-label">Total</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-4 pt-6 border-t border-border">
+                            <button 
+                                type="button" 
+                                class="btn-primary flex-1 px-6 py-3 rounded-md font-medium flex items-center justify-center space-x-2"
+                                data-event="click:generatePreview"
+                                data-implementation="Generate live preview of invoice"
+                                data-mock="true"
+                            >
+                                <i class="fas fa-eye"></i>
+                                <span>Preview Invoice</span>
+                            </button>
+                            
+                            <button 
+                                type="button" 
+                                class="btn-success flex-1 px-6 py-3 rounded-md font-medium flex items-center justify-center space-x-2"
+                                data-event="click:generatePDF"
+                                data-implementation="Generate PDF using jsPDF or similar library"
+                                data-mock="true"
+                            >
+                                <i class="fas fa-download"></i>
+                                <span>Download PDF</span>
+                            </button>
+                        </div>
+                    </form>
+                    <!-- @END_COMPONENT: InvoiceInfoForm -->
+                </div>
+            </div>
+            <!-- @END_COMPONENT: FormSection -->
+
+            <!-- @COMPONENT: PreviewSection -->
+            <div class="preview-section w-1/2">
+                <div class="bg-card rounded-lg border border-border shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold text-foreground">Invoice Preview</h2>
+                        <span class="text-sm text-muted-foreground">Live preview of your invoice</span>
+                    </div>
+
+                    <!-- @COMPONENT: InvoicePreview -->
+                    <div class="space-y-6" data-implementation="Update in real-time based on form inputs">
+                        <!-- Invoice Header -->
+                        <div class="border-b border-border pb-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h1 class="text-2xl font-bold text-foreground" data-mock="true">INVOICE</h1>
+                                    <p class="text-muted-foreground mt-1" data-bind="invoiceNumber" data-mock="true">Invoice #INV-001</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm text-muted-foreground">Date</p>
+                                    <p class="font-medium" data-mock="true">December 15, 2024</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Client Information -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-sm font-medium text-muted-foreground mb-2">Bill To:</h3>
+                                <div class="space-y-1" data-mock="true">
+                                    <p class="font-medium" data-bind="clientName">Acme Corporation</p>
+                                    <p class="text-muted-foreground" data-bind="clientEmail">john.doe@acmecorp.com</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-muted-foreground mb-2">From:</h3>
+                                <div class="space-y-1" data-mock="true">
+                                    <p class="font-medium">Your Business Name</p>
+                                    <p class="text-muted-foreground">your.email@business.com</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Services Table -->
+                        <div class="overflow-hidden rounded-lg border border-border">
+                            <table class="invoice-table">
+                                <thead>
+                                    <tr>
+                                        <th class="text-left">Service</th>
+                                        <th class="text-center">Hours</th>
+                                        <th class="text-right">Rate</th>
+                                        <th class="text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-mock="true">
+                                    <!-- @MAP: services.map(service => ( -->
+                                    <tr data-bind="service">
+                                        <td class="font-medium" data-bind="service.name">Web Development</td>
+                                        <td class="text-center" data-bind="service.hours">40</td>
+                                        <td class="text-right" data-bind="service.rate">$75.00</td>
+                                        <td class="text-right font-medium" data-bind="service.total">$3,000.00</td>
+                                    </tr>
+                                    <tr data-bind="service">
+                                        <td class="font-medium" data-bind="service.name">UI/UX Design</td>
+                                        <td class="text-center" data-bind="service.hours">20</td>
+                                        <td class="text-right" data-bind="service.rate">$85.00</td>
+                                        <td class="text-right font-medium" data-bind="service.total">$1,700.00</td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                                <tfoot>
+                                    <tr class="border-t-2 border-border">
+                                        <td colspan="3" class="font-semibold text-right">Subtotal:</td>
+                                        <td class="text-right font-semibold" data-bind="subtotal" data-mock="true">$4,700.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="font-semibold text-right">Tax (8.5%):</td>
+                                        <td class="text-right font-semibold" data-bind="tax" data-mock="true">$399.50</td>
+                                    </tr>
+                                    <tr class="bg-muted">
+                                        <td colspan="3" class="font-bold text-right text-lg">Total:</td>
+                                        <td class="text-right font-bold text-lg text-primary" data-bind="total" data-mock="true">$5,099.50</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <!-- Payment Terms -->
+                        <div class="bg-muted/50 rounded-lg p-4">
+                            <h3 class="text-sm font-medium text-foreground mb-2">Payment Terms</h3>
+                            <p class="text-sm text-muted-foreground" data-mock="true">
+                                Payment is due within 30 days of invoice date. 
+                                Late payments may be subject to a 1.5% monthly service charge.
+                            </p>
+                        </div>
+
+                        <!-- Status Indicator -->
+                        <div class="flex items-center justify-between p-4 bg-accent/10 rounded-lg border border-accent/20">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-accent rounded-full"></div>
+                                <span class="text-sm font-medium text-accent-foreground">Ready to Generate</span>
+                            </div>
+                            <span class="text-xs text-muted-foreground">All fields completed</span>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: InvoicePreview -->
+                </div>
+            </div>
+            <!-- @END_COMPONENT: PreviewSection -->
+        </div>
+        <!-- @END_COMPONENT: MainContainer -->
+    </main>
+
+    <!-- @COMPONENT: Footer -->
+    <footer class="bg-card border-t border-border mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-6 h-6 bg-primary rounded flex items-center justify-center">
+                            <i class="fas fa-file-invoice text-primary-foreground text-xs"></i>
+                        </div>
+                        <span class="text-sm font-medium text-foreground">Invoice Generator Pro</span>
+                    </div>
+                    <span class="text-sm text-muted-foreground">Professional invoice creation made simple</span>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <span class="text-sm text-muted-foreground">© 2024 Invoice Generator Pro</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- @END_COMPONENT: Footer -->
+
+    <script>
+        // TODO: Implement React Hook Form for form handling
+        // TODO: Implement jsPDF for PDF generation
+        // TODO: Implement real-time calculation updates
+        // TODO: Add form validation and error handling
+        
+        (() => {
+            // Demo functionality for form interactions
+            const addServiceBtn = document.querySelector('[data-event="click:addService"]');
+            const removeServiceBtns = document.querySelectorAll('[data-event="click:removeService"]');
+            const previewBtn = document.querySelector('[data-event="click:generatePreview"]');
+            const downloadBtn = document.querySelector('[data-event="click:generatePDF"]');
+            
+            // Simulate add service functionality
+            if (addServiceBtn) {
+                addServiceBtn.addEventListener('click', () => {
+                    // TODO: Implement add service logic with React Hook Form
+                    console.log('Add service clicked - implement with React Hook Form');
+                });
+            }
+            
+            // Simulate remove service functionality
+            removeServiceBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // TODO: Implement remove service logic
+                    console.log('Remove service clicked');
+                });
+            });
+            
+            // Simulate preview functionality
+            if (previewBtn) {
+                previewBtn.addEventListener('click', () => {
+                    // TODO: Generate live preview
+                    console.log('Preview invoice clicked');
+                });
+            }
+            
+            // Simulate PDF download functionality
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', () => {
+                    // TODO: Implement PDF generation using jsPDF
+                    console.log('Download PDF clicked - implement with jsPDF');
+                });
+            }
+            
+            // Simulate real-time calculations
+            const rateInputs = document.querySelectorAll('input[type="number"]');
+            rateInputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    // TODO: Implement real-time total calculations
+                    console.log('Input changed - update calculations');
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

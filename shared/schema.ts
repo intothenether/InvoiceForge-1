@@ -24,6 +24,8 @@ export const invoiceSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
   clientName: z.string().min(1, "Client name is required"),
   clientEmail: z.string().email("Valid email is required"),
+  clientPersonnumber: z.string().nonempty("Client personnumber is required"),
+  clientAddress: z.string().nonempty("Client address is required"),
   services: z.array(serviceSchema).min(1, "At least one service is required"),
   taxRate: z.number().min(0).max(1).default(0.25), // 25% default
 });

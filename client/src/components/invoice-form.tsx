@@ -30,6 +30,8 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
       invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
       clientName: "",
       clientEmail: "",
+      clientPersonnumber: "",
+      clientAddress: "",
       services: [{ id: "1", name: "", type: "hourly", hours: 1, rate: 0 }],
       taxRate: 0.25,
     },
@@ -66,14 +68,16 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
     }
   };
 
-  const handleClientSelect = (client: { name: string; email: string }) => {
+  const handleClientSelect = (client: { name: string; email: string, personnumber: string, address: string }) => {
     form.setValue("clientName", client.name);
     form.setValue("clientEmail", client.email);
+    form.setValue("clientPersonnumber", client.personnumber);
+    form.setValue("clientAddress", client.address);
   };
 
-  const handleClientSave = (name: string, email: string) => {
-    if (name.trim() && email.trim()) {
-      ClientStorage.saveClient(name, email);
+  const handleClientSave = (name: string, email: string, personnumber: string, address: string) => {
+    if (name.trim() && email.trim() && personnumber.trim() && address.trim()) {
+      ClientStorage.saveClient(name, email, personnumber, address);
     }
   };
 
@@ -140,7 +144,9 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
           <ClientSelector
             selectedClient={{
               name: watchedValues.clientName,
-              email: watchedValues.clientEmail
+              email: watchedValues.clientEmail,
+              personnumber: watchedValues.clientPersonnumber,
+              address: watchedValues.clientAddress
             }}
             onClientSelect={handleClientSelect}
             onClientSave={handleClientSave}
@@ -171,6 +177,37 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
               {form.formState.errors.clientEmail && (
                 <p className="text-destructive text-sm mt-1">
                   {form.formState.errors.clientEmail.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="floating-label-input">
+              <Input
+                {...form.register("clientPersonnumber")}
+                placeholder=" "
+                data-testid="input-client-personnumber"
+              />
+              <Label>{t.clientPersonnumber}</Label>
+              {form.formState.errors.clientPersonnumber && (
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.clientPersonnumber.message}
+                </p>
+              )}
+            </div>
+            
+            <div className="floating-label-input">
+              <Input
+                {...form.register("clientAddress")}
+                type="address"
+                placeholder=" "
+                data-testid="input-client-address"
+              />
+              <Label>{t.clientAddress}</Label>
+              {form.formState.errors.clientAddress && (
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.clientAddress.message}
                 </p>
               )}
             </div>
@@ -216,7 +253,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
             <div key={field.id} className="bg-muted/50 rounded-lg p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">
-                  Service #{index + 1}
+                  {t.service} #{index + 1}
                 </span>
                 {fields.length > 1 && (
                   <Button
@@ -391,7 +428,15 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
           
           <Button
             type="button"
-            onClick={handleDownload}
+            onClick={() => {
+              handleClientSave(
+                watchedValues.clientName,
+                watchedValues.clientEmail,
+                watchedValues.clientPersonnumber,
+                watchedValues.clientAddress
+              );
+              handleDownload();
+            }}
             className="flex-1 flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground"
             data-testid="button-download-pdf"
           >
