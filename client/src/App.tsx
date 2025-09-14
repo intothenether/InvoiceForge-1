@@ -6,11 +6,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import NotFound from "@/pages/not-found";
 import InvoiceGenerator from "@/pages/invoice-generator";
+import PDFStamper from "@/pages/pdf-stamper";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={InvoiceGenerator} />
+      <Route path="/stamp-pdf" component={PDFStamper} />
       <Route component={NotFound} />
     </Switch>
   );

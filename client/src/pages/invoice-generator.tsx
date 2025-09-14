@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { FileText } from "lucide-react";
+import { FileText, Stamp } from "lucide-react";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
 import { InvoiceForm } from "@/components/invoice-form";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { LanguageSelector } from "@/components/LanguageSelector";
@@ -38,6 +40,12 @@ export default function InvoiceGenerator() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Link href="/stamp-pdf">
+                <Button variant="outline" size="sm" data-testid="link-pdf-stamper">
+                  <Stamp className="h-4 w-4 mr-2" />
+                  Stamp PDF
+                </Button>
+              </Link>
               <span className="text-sm text-muted-foreground">{t.appSubtitle}</span>
               <LanguageSelector />
             </div>
