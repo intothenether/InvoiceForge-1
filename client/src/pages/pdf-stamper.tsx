@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Upload, Calendar, CreditCard, Hash, FileCheck, Download, FileText } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { addPaymentStampToPDF, PaymentStamp } from "@/lib/pdf-stamper";
+import { addPaymentStampToPDF, previewPDFStamp, PaymentStamp } from "@/lib/pdf-stamper";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function PDFStamper() {
@@ -22,16 +22,64 @@ export default function PDFStamper() {
   const [paymentReference, setPaymentReference] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [showStampPreview, setShowStampPreview] = useState<boolean>(false);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Generate preview with current payment details
+  const generatePreview = useCallback(async () => {
+    if (!selectedFile) return;
+    
+    setIsGeneratingPreview(true);
+    try {
+      const stamp: PaymentStamp = {
+        date: new Date(paymentDate),
+        method: paymentMethod || undefined,
+        reference: paymentReference || undefined,
+      };
+
+      const stampedPreview = await previewPDFStamp(selectedFile, stamp, t);
+      setPreviewUrl(stampedPreview);
+      setShowStampPreview(true);
+    } catch (error) {
+      console.warn('Could not generate preview:', error);
+    } finally {
+      setIsGeneratingPreview(false);
+    }
+  }, [selectedFile, paymentDate, paymentMethod, paymentReference, t]);
+
+  // Debounced preview update
+  const updatePreview = useCallback(() => {
+    if (previewTimeoutRef.current) {
+      clearTimeout(previewTimeoutRef.current);
+    }
+    
+    previewTimeoutRef.current = setTimeout(() => {
+      generatePreview();
+    }, 1000); // 1 second debounce
+  }, [generatePreview]);
+
+  // Effect to trigger preview updates when form values change
+  useEffect(() => {
+    if (selectedFile) {
+      updatePreview();
+    }
+    return () => {
+      if (previewTimeoutRef.current) {
+        clearTimeout(previewTimeoutRef.current);
+      }
+    };
+  }, [paymentDate, paymentMethod, paymentReference, updatePreview]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.type !== 'application/pdf') {
         toast({
-          title: "Invalid File",
-          description: "Please select a PDF file.",
+          title: t.invalidFile,
+          description: t.selectPdfFile,
           variant: "destructive",
         });
         return;
@@ -39,6 +87,7 @@ export default function PDFStamper() {
       
       setSelectedFile(file);
       setPreviewUrl("");
+      setShowStampPreview(false);
       
       // Create preview URL for the original PDF
       const url = URL.createObjectURL(file);
@@ -51,12 +100,13 @@ export default function PDFStamper() {
     const file = event.dataTransfer.files[0];
     if (file && file.type === 'application/pdf') {
       setSelectedFile(file);
+      setShowStampPreview(false);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     } else {
       toast({
-        title: "Invalid File",
-        description: "Please drop a PDF file.",
+        title: t.invalidFile,
+        description: t.dropPdfFile,
         variant: "destructive",
       });
     }
@@ -69,8 +119,8 @@ export default function PDFStamper() {
   const handleStampPDF = async () => {
     if (!selectedFile) {
       toast({
-        title: "No File Selected",
-        description: "Please select a PDF file first.",
+        title: t.noFileSelected,
+        description: t.selectPdfFirst,
         variant: "destructive",
       });
       return;
@@ -85,27 +135,30 @@ export default function PDFStamper() {
         reference: paymentReference || undefined,
       };
 
-      await addPaymentStampToPDF(selectedFile, stamp);
+      await addPaymentStampToPDF(selectedFile, stamp, t);
       
       toast({
-        title: "Success!",
-        description: "Payment stamp added successfully. The stamped PDF has been saved and shared.",
+        title: t.success,
+        description: t.paymentStampAdded,
       });
       
-      // Reset form after successful processing
-      setSelectedFile(null);
-      setPreviewUrl("");
-      setPaymentMethod("");
-      setPaymentReference("");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      // Show preview of stamped PDF
+      try {
+        const stampedPreview = await previewPDFStamp(selectedFile, stamp, t);
+        setPreviewUrl(stampedPreview);
+        setShowStampPreview(true);
+      } catch (previewError) {
+        console.warn('Could not generate preview:', previewError);
       }
+      
+      // Note: Keep form data for potential reuse/modifications
+      // User can manually clear or select a new file to reset
       
     } catch (error) {
       console.error("Error stamping PDF:", error);
       toast({
-        title: "Processing Failed",
-        description: error instanceof Error ? error.message : "Failed to add payment stamp to PDF.",
+        title: t.processingFailed,
+        description: error instanceof Error ? error.message : t.failedToAddStamp,
         variant: "destructive",
       });
     } finally {
@@ -124,17 +177,17 @@ export default function PDFStamper() {
                 <FileCheck className="h-4 w-4 text-primary-foreground" />
               </div>
               <h1 className="text-xl font-semibold text-foreground" data-testid="text-app-title">
-                PDF Payment Stamper
+                {t.pdfStamper}
               </h1>
             </div>
             <div className="flex items-center space-x-4">
               <Link href="/">
                 <Button variant="outline" size="sm" data-testid="link-invoice-generator">
                   <FileText className="h-4 w-4 mr-2" />
-                  Create Invoice
+                  {t.createInvoice}
                 </Button>
               </Link>
-              <span className="text-sm text-muted-foreground">Add payment stamps to existing invoices</span>
+              <span className="text-sm text-muted-foreground">{t.addPaymentStampsExisting}</span>
             </div>
           </div>
         </div>
@@ -151,7 +204,7 @@ export default function PDFStamper() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Upload className="h-5 w-5" />
-                  <span>Upload Invoice PDF</span>
+                  <span>{t.uploadInvoicePdf}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -180,17 +233,17 @@ export default function PDFStamper() {
                         {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Click to select a different file
+                        {t.clickToSelectDifferentFile}
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2">
                       <Upload className="h-12 w-12 text-muted-foreground mx-auto" />
                       <p className="text-sm font-medium text-foreground">
-                        Drop PDF file here or click to browse
+                        {t.dropPdfHere}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Only PDF files are accepted
+                        {t.onlyPdfAccepted}
                       </p>
                     </div>
                   )}
@@ -203,14 +256,14 @@ export default function PDFStamper() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <CreditCard className="h-5 w-5" />
-                  <span>Payment Details</span>
+                  <span>{t.paymentDetails}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="payment-date" className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4" />
-                    <span>Payment Date</span>
+                    <span>{t.paymentDate}</span>
                   </Label>
                   <Input
                     id="payment-date"
@@ -222,17 +275,17 @@ export default function PDFStamper() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="payment-method">Payment Method (Optional)</Label>
+                  <Label htmlFor="payment-method">{t.paymentMethodOptional}</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                     <SelectTrigger data-testid="select-payment-method">
-                      <SelectValue placeholder="Select payment method" />
+                      <SelectValue placeholder={t.selectPaymentMethod} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="bank-transfer" data-testid="option-bank-transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="credit-card" data-testid="option-credit-card">Credit Card</SelectItem>
-                      <SelectItem value="cash" data-testid="option-cash">Cash</SelectItem>
-                      <SelectItem value="check" data-testid="option-check">Check</SelectItem>
-                      <SelectItem value="other" data-testid="option-other">Other</SelectItem>
+                      <SelectItem value="bank-transfer" data-testid="option-bank-transfer">{t.bankTransfer}</SelectItem>
+                      <SelectItem value="credit-card" data-testid="option-credit-card">{t.creditCard}</SelectItem>
+                      <SelectItem value="cash" data-testid="option-cash">{t.cash}</SelectItem>
+                      <SelectItem value="check" data-testid="option-check">{t.check}</SelectItem>
+                      <SelectItem value="other" data-testid="option-other">{t.other}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -240,12 +293,12 @@ export default function PDFStamper() {
                 <div className="space-y-2">
                   <Label htmlFor="payment-reference" className="flex items-center space-x-2">
                     <Hash className="h-4 w-4" />
-                    <span>Payment Reference (Optional)</span>
+                    <span>{t.paymentReferenceOptional}</span>
                   </Label>
                   <Input
                     id="payment-reference"
                     type="text"
-                    placeholder="e.g., Transaction ID, Check number"
+                    placeholder={t.transactionIdPlaceholder}
                     value={paymentReference}
                     onChange={(e) => setPaymentReference(e.target.value)}
                     data-testid="input-payment-reference"
@@ -259,11 +312,11 @@ export default function PDFStamper() {
                   data-testid="button-add-stamp"
                 >
                   {isProcessing ? (
-                    <>Processing...</>
+                    <>{t.processing}</>
                   ) : (
                     <>
                       <Download className="h-4 w-4 mr-2" />
-                      Add Payment Stamp & Export
+                      {t.addPaymentStampExport}
                     </>
                   )}
                 </Button>
@@ -275,7 +328,19 @@ export default function PDFStamper() {
           <div>
             <Card className="h-full">
               <CardHeader>
-                <CardTitle>PDF Preview</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{t.pdfPreview}</span>
+                  {isGeneratingPreview && (
+                    <div className="text-sm text-muted-foreground">
+                      {t.processing}...
+                    </div>
+                  )}
+                  {showStampPreview && (
+                    <div className="text-sm text-green-600 font-medium">
+                      Stamped Preview
+                    </div>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {previewUrl ? (
@@ -291,7 +356,7 @@ export default function PDFStamper() {
                   <div className="w-full h-[600px] border border-border rounded-lg flex items-center justify-center text-muted-foreground">
                     <div className="text-center space-y-2">
                       <FileCheck className="h-12 w-12 mx-auto" />
-                      <p>Upload a PDF to see preview</p>
+                      <p>{t.uploadPdfToPreview}</p>
                     </div>
                   </div>
                 )}

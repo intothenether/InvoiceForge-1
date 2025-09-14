@@ -84,6 +84,53 @@ export interface Translations {
   language: string;
   english: string;
   swedish: string;
+  
+  // PDF Stamper
+  pdfStamper: string;
+  stampPdf: string;
+  uploadInvoicePdf: string;
+  paymentDetails: string;
+  paymentDate: string;
+  paymentMethod: string;
+  paymentMethodOptional: string;
+  paymentReference: string;
+  paymentReferenceOptional: string;
+  addPaymentStamp: string;
+  pdfPreview: string;
+  uploadPdfToPreview: string;
+  dropPdfHere: string;
+  onlyPdfAccepted: string;
+  clickToSelectDifferentFile: string;
+  invalidFile: string;
+  selectPdfFile: string;
+  dropPdfFile: string;
+  noFileSelected: string;
+  selectPdfFirst: string;
+  success: string;
+  paymentStampAdded: string;
+  processingFailed: string;
+  failedToAddStamp: string;
+  processing: string;
+  addPaymentStampExport: string;
+  createInvoice: string;
+  addPaymentStampsExisting: string;
+  // Payment Methods
+  bankTransfer: string;
+  creditCard: string;
+  cash: string;
+  check: string;
+  other: string;
+  selectPaymentMethod: string;
+  transactionIdPlaceholder: string;
+  
+  // PDF Stamp Content
+  paid: string;
+  dateLabel: string;
+  methodLabel: string;
+  refLabel: string;
+  stampedInvoice: string;
+  hereIsStampedInvoice: string;
+  shareStampedInvoice: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -161,7 +208,54 @@ export const translations: Record<Language, Translations> = {
     
     language: "Language",
     english: "English",
-    swedish: "Swedish"
+    swedish: "Swedish",
+    
+    // PDF Stamper
+    pdfStamper: "PDF Payment Stamper",
+    stampPdf: "Stamp PDF",
+    uploadInvoicePdf: "Upload Invoice PDF",
+    paymentDetails: "Payment Details",
+    paymentDate: "Payment Date",
+    paymentMethod: "Payment Method",
+    paymentMethodOptional: "Payment Method (Optional)",
+    paymentReference: "Payment Reference",
+    paymentReferenceOptional: "Payment Reference (Optional)",
+    addPaymentStamp: "Add Payment Stamp",
+    pdfPreview: "PDF Preview",
+    uploadPdfToPreview: "Upload a PDF to see preview",
+    dropPdfHere: "Drop PDF file here or click to browse",
+    onlyPdfAccepted: "Only PDF files are accepted",
+    clickToSelectDifferentFile: "Click to select a different file",
+    invalidFile: "Invalid File",
+    selectPdfFile: "Please select a PDF file.",
+    dropPdfFile: "Please drop a PDF file.",
+    noFileSelected: "No File Selected",
+    selectPdfFirst: "Please select a PDF file first.",
+    success: "Success!",
+    paymentStampAdded: "Payment stamp added successfully. The stamped PDF has been saved and shared.",
+    processingFailed: "Processing Failed",
+    failedToAddStamp: "Failed to add payment stamp to PDF.",
+    processing: "Processing...",
+    addPaymentStampExport: "Add Payment Stamp & Export",
+    createInvoice: "Create Invoice",
+    addPaymentStampsExisting: "Add payment stamps to existing invoices",
+    // Payment Methods
+    bankTransfer: "Bank Transfer",
+    creditCard: "Credit Card",
+    cash: "Cash",
+    check: "Check",
+    other: "Other",
+    selectPaymentMethod: "Select payment method",
+    transactionIdPlaceholder: "e.g., Transaction ID, Check number",
+    
+    // PDF Stamp Content
+    paid: "PAID",
+    dateLabel: "Date:",
+    methodLabel: "Method:",
+    refLabel: "Ref:",
+    stampedInvoice: "Stamped Invoice",
+    hereIsStampedInvoice: "Here is your stamped invoice",
+    shareStampedInvoice: "Share Stamped Invoice"
   },
   
   sv: {
@@ -238,6 +332,53 @@ export const translations: Record<Language, Translations> = {
     
     language: "Språk",
     english: "Engelska",
-    swedish: "Svenska"
+    swedish: "Svenska",
+    
+    // PDF Stamper
+    pdfStamper: "PDF Betalningsstämpel",
+    stampPdf: "Stämpla PDF",
+    uploadInvoicePdf: "Ladda upp faktura PDF",
+    paymentDetails: "Betalningsdetaljer",
+    paymentDate: "Betalningsdatum",
+    paymentMethod: "Betalningsmetod",
+    paymentMethodOptional: "Betalningsmetod (Valfritt)",
+    paymentReference: "Betalningsreferens",
+    paymentReferenceOptional: "Betalningsreferens (Valfritt)",
+    addPaymentStamp: "Lägg till betalningsstämpel",
+    pdfPreview: "PDF Förhandsgranskning",
+    uploadPdfToPreview: "Ladda upp en PDF för att se förhandsgranskning",
+    dropPdfHere: "Släpp PDF-fil här eller klicka för att bläddra",
+    onlyPdfAccepted: "Endast PDF-filer accepteras",
+    clickToSelectDifferentFile: "Klicka för att välja en annan fil",
+    invalidFile: "Ogiltig fil",
+    selectPdfFile: "Vänligen välj en PDF-fil.",
+    dropPdfFile: "Vänligen släpp en PDF-fil.",
+    noFileSelected: "Ingen fil vald",
+    selectPdfFirst: "Vänligen välj en PDF-fil först.",
+    success: "Framgång!",
+    paymentStampAdded: "Betalningsstämpel tillagd framgångsrikt. Den stämplade PDF:en har sparats och delats.",
+    processingFailed: "Bearbetning misslyckades",
+    failedToAddStamp: "Misslyckades med att lägga till betalningsstämpel på PDF.",
+    processing: "Bearbetar...",
+    addPaymentStampExport: "Lägg till betalningsstämpel & exportera",
+    createInvoice: "Skapa faktura",
+    addPaymentStampsExisting: "Lägg till betalningsstämplar på befintliga fakturor",
+    // Payment Methods
+    bankTransfer: "Banköverföring",
+    creditCard: "Kreditkort",
+    cash: "Kontanter",
+    check: "Check",
+    other: "Annat",
+    selectPaymentMethod: "Välj betalningsmetod",
+    transactionIdPlaceholder: "t.ex. Transaktions-ID, Checknummer",
+    
+    // PDF Stamp Content
+    paid: "BETALD",
+    dateLabel: "Datum:",
+    methodLabel: "Metod:",
+    refLabel: "Ref:",
+    stampedInvoice: "Stämplad Faktura",
+    hereIsStampedInvoice: "Här är din stämplade faktura",
+    shareStampedInvoice: "Dela Stämplad Faktura"
   }
 };
