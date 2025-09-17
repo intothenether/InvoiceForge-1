@@ -27,6 +27,9 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      external: ['@capacitor/filesystem'],  // Exclude from the build process
+    },
   },
   server: {
     fs: {
