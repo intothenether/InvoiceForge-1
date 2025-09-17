@@ -1,29 +1,60 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-
-buildscript {
-    
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.4.1'
-        classpath 'com.google.gms:google-services:4.4.2'
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-    }
+plugins {
+    id "com.android.application" version "8.4.1" apply false
+    id "com.android.library" version "8.4.1" apply false
+    id "org.jetbrains.kotlin.android" version "2.0.0" apply false
+    id "com.google.gms.google-services" version "4.4.2" apply false
 }
 
 apply from: "variables.gradle"
 
+// Global Kotlin JVM toolchain
 allprojects {
+    plugins.withId("org.jetbrains.kotlin.android") {
+        kotlin {
+            jvmToolchain(17)
+        }
+    }
+    // Optional: ensure KotlinCompile tasks respect JVM 17
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
+    tasks.withType(JavaCompile).configureEach {
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
+    }
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
+        }
+    }
     repositories {
         google()
         mavenCentral()
     }
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+subprojects {
+    configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'androidx.core') {
+                if (details.requested.name == 'core-ktx' || details.requested.name == 'core') {
+                    details.useVersion "1.13.0"
+                }
+            }
+            if (details.requested.group == 'androidx.coordinatorlayout') {
+                details.useVersion "1.2.0"
+            }
+            if (details.requested.group == 'androidx.core' && details.requested.name == 'core-splashscreen') {
+                details.useVersion "1.0.0"
+            }
+        }
+    }
+}
+
+tasks.register("clean", Delete) {
+    delete(rootProject.buildDir)
 }
