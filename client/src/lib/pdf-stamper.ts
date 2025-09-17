@@ -1,8 +1,4 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
-import { Capacitor } from '@capacitor/core';
+import { PDFDocument, rgb, StandardFonts, PDFOperator, PDFName } from 'pdf-lib';
 import type { Translations } from './translations';
 
 export interface PaymentStamp {
@@ -84,16 +80,34 @@ export async function addPaymentStampToPDF(
     const stampX = width - 150;
     const stampY = height - 60;
     
-    // Draw stamp background (light green rectangle)
-    firstPage.drawRectangle({
-      x: stampX - 10,
-      y: stampY - 30,
-      width: 140,
-      height: 50,
-      borderColor: rgb(0.2, 0.7, 0.2), // Green border
-      borderWidth: 2,
-      color: rgb(0.9, 1, 0.9), // Light green background
-    });
+// Before drawing the rectangle, set the opacity
+    const graphicsState = pdfDoc.context.obj({
+    Type: 'ExtGState',
+    CA: 0.3, // stroke opacity
+    ca: 0.3, // fill opacity
+  });
+  const graphicsStateKey = pdfDoc.context.register(graphicsState);
+  firstPage.node.setExtGState(PDFName.of('GS1'), graphicsStateKey);
+
+  // Use the graphics state when drawing the rectangle
+  firstPage.pushOperators(
+    PDFOperator.of('q' as any),
+    PDFOperator.of('/GS1 gs' as any)
+  );
+
+  firstPage.drawRectangle({
+    x: stampX - 10,
+    y: stampY - 30,
+    width: 140,
+    height: 50,
+    borderColor: rgb(0.2, 0.7, 0.2),
+    borderWidth: 1,
+    color: rgb(0.95, 1, 0.95),
+  });
+
+  firstPage.pushOperators(
+    PDFOperator.of('Q' as any)
+  );
     
     // Add "PAID" text (localized)
     firstPage.drawText(t.paid, {
@@ -148,14 +162,17 @@ export async function addPaymentStampToPDF(
     const stampedFileName = `${originalName}_stamped_${Date.now()}.pdf`;
     
     // Check if we're running on a mobile platform (Capacitor)
-    if (Capacitor.isNativePlatform()) {
+    const isNative = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform && (window as any).Capacitor.isNativePlatform();
+    if (isNative) {
       try {
+        // Dynamically import Capacitor plugins
+        const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem');
+        const { Share } = await import('@capacitor/share');
         // Save to device using Capacitor
         await Filesystem.writeFile({
           path: stampedFileName,
           data: pdfBase64,
           directory: Directory.Documents,
-          encoding: Encoding.BASE64,
           recursive: true
         });
         
@@ -214,16 +231,34 @@ export async function previewPDFStamp(
     const stampX = width - 150;
     const stampY = height - 60;
     
-    // Draw stamp background (lighter for preview)
-    firstPage.drawRectangle({
-      x: stampX - 10,
-      y: stampY - 30,
-      width: 140,
-      height: 50,
-      borderColor: rgb(0.2, 0.7, 0.2), // Green border
-      borderWidth: 1,
-      color: rgb(0.95, 1, 0.95), // Very light green background for preview
-    });
+  // Before drawing the rectangle, set the opacity
+    const graphicsState = pdfDoc.context.obj({
+    Type: 'ExtGState',
+    CA: 0.3, // stroke opacity
+    ca: 0.3, // fill opacity
+  });
+  const graphicsStateKey = pdfDoc.context.register(graphicsState);
+  firstPage.node.setExtGState(PDFName.of('GS1'), graphicsStateKey);
+
+  // Use the graphics state when drawing the rectangle
+  firstPage.pushOperators(
+    PDFOperator.of('q' as any),
+    PDFOperator.of('/GS1 gs' as any)
+  );
+
+  firstPage.drawRectangle({
+    x: stampX - 10,
+    y: stampY - 30,
+    width: 140,
+    height: 50,
+    borderColor: rgb(0.2, 0.7, 0.2),
+    borderWidth: 1,
+    color: rgb(0.95, 1, 0.95),
+  });
+
+  firstPage.pushOperators(
+    PDFOperator.of('Q' as any)
+  );
     
     // Add "PAID" text (localized)
     firstPage.drawText(t.paid, {

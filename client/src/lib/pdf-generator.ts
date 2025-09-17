@@ -2,8 +2,20 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Invoice } from '@shared/schema';
 import { Language, translations } from '@/lib/translations';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
+
+export async function requestFilesystemPermissions() {
+  try {
+    const { Filesystem } = await import('@capacitor/filesystem');
+    const result = await Filesystem.requestPermissions();
+    console.log('Filesystem permissions:', result);
+    // result.publicStorage === 'granted' means you have permission
+    return result;
+  } catch (error) {
+    console.error('Failed to request filesystem permissions:', error);
+    throw error;
+  }
+}
+
 
 export async function generateInvoicePDF(invoice: Invoice, language: Language = 'en') {
   const t = translations[language];
@@ -134,19 +146,39 @@ export async function generateInvoicePDF(invoice: Invoice, language: Language = 
   //doc.save(`${language === 'sv' ? 'faktura' : 'invoice'}-${invoice.invoiceNumber}.pdf`);
   const pdfOutput = doc.output('datauristring'); // or 'arraybuffer' / 'blob'
 
+  const isNative = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform;
+
+  if (isNative) {
+  const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem');
+  const { Share } = await import('@capacitor/share');
+
+  await requestFilesystemPermissions();
+
+  const fileName = `${language === 'sv' ? 'faktura' : 'invoice'}-${invoice.invoiceNumber}.pdf`;
+
   // Save to device
   await Filesystem.writeFile({
-    path: `${language === 'sv' ? 'faktura' : 'invoice'}-${invoice.invoiceNumber}.pdf`,
+    path: fileName,
     data: pdfOutput.split(',')[1], // strip "data:application/pdf;base64,"
     directory: Directory.Documents,
     recursive: true
   });
 
-  // Optional: let user share/open the file
+  // Get the file URI
+  const fileUriResult = await Filesystem.getUri({
+    path: fileName,
+    directory: Directory.Documents,
+  });
+
+  // Share the file using the file URI
   await Share.share({
     title: 'Facio Faktura',
     text: 'Här är din faktura',
-    url: pdfOutput,
+    url: fileUriResult.uri, // <-- Use the file URI here
     dialogTitle: 'Dela Faktura'
   });
+  } else {
+    // Browser fallback: download the PDF
+    doc.save(`${language === 'sv' ? 'faktura' : 'invoice'}-${invoice.invoiceNumber}.pdf`);
+  }
 }
