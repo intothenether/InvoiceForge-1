@@ -4,7 +4,7 @@ export interface Translations {
   // Header
   appTitle: string;
   appSubtitle: string;
-  
+
   // Form
   invoiceDetails: string;
   fillServiceInfo: string;
@@ -21,11 +21,11 @@ export interface Translations {
   hours: string;
   rate: string;
   total: string;
-  
+
   // Actions
   previewInvoice: string;
   downloadPDF: string;
-  
+
   // Preview
   invoicePreview: string;
   livePreview: string;
@@ -40,6 +40,7 @@ export interface Translations {
   businessPlusgiro: string;
   service: string;
   skatterabatt: string;
+  includeSkatterabatt: string;
   subtotal: string;
   tax: string;
   paymentTerms: string;
@@ -49,7 +50,7 @@ export interface Translations {
   allFieldsCompleted: string;
   pleaseFillFields: string;
   pleaseFillRequiredFields: string;
-  
+
   // Toast messages
   previewUpdated: string;
   previewUpdatedDesc: string;
@@ -59,18 +60,18 @@ export interface Translations {
   downloadSuccessful: string;
   downloadFailed: string;
   downloadError: string;
-  
+
   // Footer
   copyright: string;
   tagline: string;
-  
+
   // Service Types
   serviceType: string;
   hourlyService: string;
   fixedService: string;
   fixedTotal: string;
   taxRateLabel: string;
-  
+
   // Client Selection
   clientSelection: string;
   selectExistingClient: string;
@@ -79,12 +80,12 @@ export interface Translations {
   addNewClient: string;
   hideDeleteButtons: string;
   showDeleteButtons: string;
-  
+
   // Language
   language: string;
   english: string;
   swedish: string;
-  
+
   // PDF Stamper
   pdfStamper: string;
   stampPdf: string;
@@ -122,7 +123,7 @@ export interface Translations {
   other: string;
   selectPaymentMethod: string;
   transactionIdPlaceholder: string;
-  
+
   // PDF Stamp Content
   paid: string;
   dateLabel: string;
@@ -131,13 +132,42 @@ export interface Translations {
   stampedInvoice: string;
   hereIsStampedInvoice: string;
   shareStampedInvoice: string;
+
+  // Batch Mode
+  batchMode: string;
+  singleFile: string;
+  batchProcessing: string;
+  sourceFolder: string;
+  selectFolder: string;
+  browse: string;
+  filesFound: string;
+  setPaymentDetailsForEach: string;
+  file: string;
+  method: string;
+  reference: string;
+  processFiles: string;
+  stopProcessing: string;
+
+  // Dark Mode
+  theme: string;
+  lightMode: string;
+  darkMode: string;
+
+  // Folder Actions
+  invoiceFolder: string;
+  stampedFolder: string;
+
+  // Invoice History
+  loadFromLastInvoice: string;
+  noInvoiceHistory: string;
+  invoiceHistoryLoaded: string;
 }
 
 export const translations: Record<Language, Translations> = {
   en: {
     appTitle: "Facio",
     appSubtitle: "Invoice Creation",
-    
+
     invoiceDetails: "Invoice Details",
     fillServiceInfo: "Fill in service information",
     clientInformation: "Client Information",
@@ -153,23 +183,24 @@ export const translations: Record<Language, Translations> = {
     hours: "Hours",
     rate: "Rate ($)",
     total: "Total",
-    
+
     previewInvoice: "Preview Invoice",
     downloadPDF: "Download PDF",
-    
+
     invoicePreview: "Invoice Preview",
     livePreview: "Live preview of your invoice",
     invoice: "INVOICE",
     date: "Date",
     billTo: "Bill To:",
     from: "From:",
-    businessName: "Reginastads",
-    businessEmail: "reginasfirma@gmail.com",
-    businessMomsregnr: "SE 650907284601",
-    businessPhone: "0737705714",
-    businessPlusgiro: "509014-7",
+    businessName: "Your Business Name",
+    businessEmail: "business@example.com",
+    businessMomsregnr: "SE123456789001",
+    businessPhone: "+46 8 123 456 78",
+    businessPlusgiro: "123456-7",
     service: "Service",
     skatterabatt: "Skatterabatt",
+    includeSkatterabatt: "Include Skatterabatt (50%)",
     subtotal: "Subtotal:",
     tax: "Tax",
     paymentTerms: "Payment Terms",
@@ -179,7 +210,7 @@ export const translations: Record<Language, Translations> = {
     allFieldsCompleted: "All fields completed",
     pleaseFillFields: "Please fill required fields",
     pleaseFillRequiredFields: "Please fill required fields",
-    
+
     previewUpdated: "Preview Updated",
     previewUpdatedDesc: "Invoice preview has been updated with your changes.",
     validationError: "Validation Error",
@@ -188,16 +219,16 @@ export const translations: Record<Language, Translations> = {
     downloadSuccessful: "Your invoice has been downloaded successfully.",
     downloadFailed: "Download Failed",
     downloadError: "There was an error generating the PDF. Please try again.",
-    
-    copyright: "© 2025 Facio",
+
+    copyright: "© 2025 Sebastian Klawon",
     tagline: "Invoice creation made simple",
-    
+
     serviceType: "Service Type",
     hourlyService: "Hourly Service",
     fixedService: "Fixed Price Service",
     fixedTotal: "Fixed Total",
     taxRateLabel: "Tax Rate",
-    
+
     clientSelection: "Client Selection",
     selectExistingClient: "Select existing client or enter new",
     searchClients: "Search clients...",
@@ -205,11 +236,11 @@ export const translations: Record<Language, Translations> = {
     addNewClient: "Add new client",
     hideDeleteButtons: "Hide delete buttons",
     showDeleteButtons: "Show delete buttons",
-    
+
     language: "Language",
     english: "English",
     swedish: "Swedish",
-    
+
     // PDF Stamper
     pdfStamper: "PDF Payment Stamper",
     stampPdf: "Stamp PDF",
@@ -247,7 +278,7 @@ export const translations: Record<Language, Translations> = {
     other: "Other",
     selectPaymentMethod: "Select payment method",
     transactionIdPlaceholder: "e.g., Transaction ID, Check number",
-    
+
     // PDF Stamp Content
     paid: "PAID",
     dateLabel: "Date:",
@@ -255,13 +286,42 @@ export const translations: Record<Language, Translations> = {
     refLabel: "Ref:",
     stampedInvoice: "Stamped Invoice",
     hereIsStampedInvoice: "Here is your stamped invoice",
-    shareStampedInvoice: "Share Stamped Invoice"
+    shareStampedInvoice: "Share Stamped Invoice",
+
+    // Batch Mode
+    batchMode: "Batch Mode",
+    singleFile: "Single File",
+    batchProcessing: "Batch Processing",
+    sourceFolder: "Source Folder",
+    selectFolder: "Select folder...",
+    browse: "Browse",
+    filesFound: "files found",
+    setPaymentDetailsForEach: "Set payment details for each",
+    file: "File",
+    method: "Method",
+    reference: "Reference",
+    processFiles: "Process Files",
+    stopProcessing: "Stop Processing",
+
+    // Dark Mode
+    theme: "Theme",
+    lightMode: "Light Mode",
+    darkMode: "Dark Mode",
+
+    // Folder Actions
+    invoiceFolder: "Invoice Folder",
+    stampedFolder: "Stamped Folder",
+
+    // Invoice History
+    loadFromLastInvoice: "Load from Last Invoice",
+    noInvoiceHistory: "No previous invoice found for this client.",
+    invoiceHistoryLoaded: "Loaded services from previous invoice"
   },
-  
+
   sv: {
     appTitle: "Facio",
     appSubtitle: "Fakturaframställning",
-    
+
     invoiceDetails: "Fakturadetaljer",
     fillServiceInfo: "Fyll i tjänstinformation",
     clientInformation: "Kundinformation",
@@ -277,23 +337,24 @@ export const translations: Record<Language, Translations> = {
     hours: "Timmar",
     rate: "Timpris (kr)",
     total: "Summa",
-    
+
     previewInvoice: "Förhandsgranska faktura",
     downloadPDF: "Ladda ner PDF",
-    
+
     invoicePreview: "Förhandsgranskning av faktura",
     livePreview: "Live förhandsgranskning av din faktura",
     invoice: "FAKTURA",
     date: "Datum",
     billTo: "Faktureras till:",
     from: "Från:",
-    businessName: "Reginastads",
-    businessEmail: "reginasfirma@gmail.com",
-    businessMomsregnr: "SE 650907284601",
-    businessPhone: "0737705714",
-    businessPlusgiro: "509014-7",
+    businessName: "Facio AB",
+    businessEmail: "info@facio.se",
+    businessMomsregnr: "SE556789012301",
+    businessPhone: "+46 8 123 456 78",
+    businessPlusgiro: "123456-7",
     service: "Tjänst",
     skatterabatt: "Skatterabatt",
+    includeSkatterabatt: "Inkludera Skatterabatt (50%)",
     subtotal: "Delsumma:",
     tax: "Moms",
     paymentTerms: "Betalningsvillkor",
@@ -303,25 +364,25 @@ export const translations: Record<Language, Translations> = {
     allFieldsCompleted: "Alla fält ifyllda",
     pleaseFillFields: "Vänligen fyll i obligatoriska fält",
     pleaseFillRequiredFields: "Vänligen fyll i obligatoriska fält",
-    
+
     previewUpdated: "Förhandsgranskning uppdaterad",
     previewUpdatedDesc: "Förhandsvisningen av fakturan har uppdaterats med dina ändringar.",
     validationError: "Valideringsfel",
     fillRequiredFields: "Vänligen fyll i alla obligatoriska fält innan förhandsgranskning.",
     pdfGenerated: "PDF skapad",
-    downloadSuccessful: "Din faktura har laddats ned!",
+    downloadSuccessful: "Din faktura har laddats ner!",
     downloadFailed: "Nedladdningen misslyckades.",
     downloadError: "Ett fel uppstod när PDF:en skulle skapas. Vänligen försök igen.",
-    
-    copyright: "© 2025 Facio",
+
+    copyright: "© 2025 Sebastian Klawon",
     tagline: "Enkel fakturaframställning",
-    
+
     serviceType: "Tjänsttyp",
     hourlyService: "Timtjänst",
     fixedService: "Fast pris tjänst",
     fixedTotal: "Fast totalt",
     taxRateLabel: "Momssats",
-    
+
     clientSelection: "Kundval",
     selectExistingClient: "Välj befintlig kund eller ange ny",
     searchClients: "Sök kunder...",
@@ -329,11 +390,11 @@ export const translations: Record<Language, Translations> = {
     addNewClient: "Lägg till ny kund",
     hideDeleteButtons: "Dölj raderingsknapparna",
     showDeleteButtons: "Visa raderingsknapparna",
-    
+
     language: "Språk",
     english: "Engelska",
     swedish: "Svenska",
-    
+
     // PDF Stamper
     pdfStamper: "PDF Betalningsstämpel",
     stampPdf: "Stämpla PDF",
@@ -371,7 +432,7 @@ export const translations: Record<Language, Translations> = {
     other: "Annat",
     selectPaymentMethod: "Välj betalningsmetod",
     transactionIdPlaceholder: "t.ex. Transaktions-ID, Checknummer",
-    
+
     // PDF Stamp Content
     paid: "BETALD",
     dateLabel: "Datum:",
@@ -379,6 +440,35 @@ export const translations: Record<Language, Translations> = {
     refLabel: "Ref:",
     stampedInvoice: "Stämplad Faktura",
     hereIsStampedInvoice: "Här är din stämplade faktura",
-    shareStampedInvoice: "Dela Stämplad Faktura"
+    shareStampedInvoice: "Dela Stämplad Faktura",
+
+    // Batch Mode
+    batchMode: "Batchläge",
+    singleFile: "Enskild Fil",
+    batchProcessing: "Batchbearbetning",
+    sourceFolder: "Källmapp",
+    selectFolder: "Välj mapp...",
+    browse: "Bläddra",
+    filesFound: "filer hittades",
+    setPaymentDetailsForEach: "Ange betalningsdetaljer för varje",
+    file: "Fil",
+    method: "Metod",
+    reference: "Referens",
+    processFiles: "Bearbeta Filer",
+    stopProcessing: "Stoppa Bearbetning",
+
+    // Dark Mode
+    theme: "Tema",
+    lightMode: "Ljust Läge",
+    darkMode: "Mörkt Läge",
+
+    // Folder Actions
+    invoiceFolder: "Fakturamapp",
+    stampedFolder: "Stämplad-mapp",
+
+    // Invoice History
+    loadFromLastInvoice: "Ladda från Senaste Faktura",
+    noInvoiceHistory: "Ingen tidigare faktura hittades för denna kund.",
+    invoiceHistoryLoaded: "Tjänster laddade från tidigare faktura"
   }
 };

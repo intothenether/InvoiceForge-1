@@ -2,6 +2,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Invoice } from '@shared/schema';
 import { Language, translations } from '@/lib/translations';
+import { getBusinessConfig } from '@shared/config';
+import { saveInvoiceToHistory } from '@/lib/invoice-history';
 
 export async function requestFilesystemPermissions() {
   try {
@@ -19,6 +21,7 @@ export async function requestFilesystemPermissions() {
 
 export async function generateInvoicePDF(invoice: Invoice, language: Language = 'en') {
   const t = translations[language];
+  const businessConfig = getBusinessConfig();
   const doc = new jsPDF();
 
   // Set font
@@ -40,14 +43,15 @@ export async function generateInvoicePDF(invoice: Invoice, language: Language = 
     const y = date.getFullYear();
     return `${d}/${m}/${y}`;
   };
+
   doc.text(`${t.date}: ${formatDate(new Date())}`, 20, 45);
 
-  // Company info (right side)
-  doc.text(t.businessName, 140, 30);
-  doc.text("E-post " + t.businessEmail, 140, 35);
-  doc.text("Momsregnr. " + t.businessMomsregnr, 140, 40);
-  doc.text("Tel. " + t.businessPhone, 140, 45);
-  doc.text("PLUSGIRO " + t.businessPlusgiro, 140, 50);
+  // Company info (right side) - now using config
+  doc.text(businessConfig.businessName, 140, 30);
+  doc.text("E-post " + businessConfig.businessEmail, 140, 35);
+  doc.text("Momsregnr. " + businessConfig.businessMomsregnr, 140, 40);
+  doc.text("Tel. " + businessConfig.businessPhone, 140, 45);
+  doc.text("PLUSGIRO " + businessConfig.businessPlusgiro, 140, 50);
 
   // Client info
   doc.setFontSize(12);
@@ -112,7 +116,7 @@ export async function generateInvoicePDF(invoice: Invoice, language: Language = 
       ['', '', `${t.subtotal}`, `${language === 'sv' ? '' : '$'}${subtotal.toFixed(2)}${language === 'sv' ? ' kr' : ''}`],
       ['', '', `${t.tax} (${(invoice.taxRate * 100).toFixed(1)}%):`, `${language === 'sv' ? '' : '$'}${tax.toFixed(2)}${language === 'sv' ? ' kr' : ''}`],
       ['', '', `${t.total}:`, `${language === 'sv' ? '' : '$'}${total.toFixed(2)}${language === 'sv' ? ' kr' : ''}`],
-      ['', '', `${t.skatterabatt}:`, `${language === 'sv' ? '' : '$'}${(total / 2).toFixed(2)}${language === 'sv' ? ' kr' : ''}`]
+      ...(invoice.includeSkatterabatt ? [['', '', `${t.skatterabatt}:`, `${language === 'sv' ? '' : '$'}${(total / 2).toFixed(2)}${language === 'sv' ? ' kr' : ''}`]] : [])
     ],
     styles: {
       fontSize: 10,
@@ -143,42 +147,71 @@ export async function generateInvoicePDF(invoice: Invoice, language: Language = 
   //doc.text(t.paymentTermsText.split('. ')[1] || '', 20, finalY + 32);
 
   // Download the PDF
-  //doc.save(`${language === 'sv' ? 'faktura' : 'invoice'}-${invoice.invoiceNumber}.pdf`);
   const pdfOutput = doc.output('datauristring'); // or 'arraybuffer' / 'blob'
 
-  const isNative = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform;
+  const isNative =
+    typeof window !== 'undefined' &&
+    (window as any).Capacitor?.isNativePlatform?.();
+
+  // Generate filename with client name and invoice number
+  // Clean client name for filename (remove special characters)
+  const cleanClientName = invoice.clientName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+  const fileName = `${language === 'sv' ? 'faktura' : 'invoice'}_${cleanClientName}_${invoice.invoiceNumber}.pdf`;
+
+  // Electron (Desktop) check
+  if (window.electronAPI && businessConfig.invoiceSavePath) {
+    try {
+      // For electron we need the raw data, not datauri for cleaner saving
+      const pdfBase64 = doc.output('datauristring').split(',')[1];
+      const fullPath = `${businessConfig.invoiceSavePath}\\${fileName}`; // Using backslash for Windows as per OS context
+
+      const result = await window.electronAPI.saveFile(fullPath, pdfBase64, 'base64');
+      if (result.success) {
+        console.log('File saved to:', fullPath);
+
+        // Save to history immediately upon success
+        saveInvoiceToHistory(invoice);
+
+        return; // Success, skip other methods
+      } else {
+        // If canceled, we just return and do don't fallback to browser download
+        // because the user explicitly canceled the action.
+        console.log('Save action canceled by user');
+        return;
+      }
+    } catch (err) {
+      console.error('Electron save error:', err);
+      // Fallback to browser download if electron save fails
+    }
+  }
 
   if (isNative) {
-  const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem');
-  const { Share } = await import('@capacitor/share');
+    try {
+      const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem');
+      const { Share } = await import('@capacitor/share');
 
-  await requestFilesystemPermissions();
+      const writeResult = await Filesystem.writeFile({
+        path: fileName,
+        data: pdfOutput.split(',')[1], // strip "data:application/pdf;base64,"
+        directory: Directory.Cache, // Use Cache instead of Data
+        encoding: Encoding.UTF8, // Use UTF8 for base64 data with Capacitor
+        recursive: true
+      });
 
-  const fileName = `${language === 'sv' ? 'faktura' : 'invoice'}-${invoice.invoiceNumber}.pdf`;
+      console.log('File URI for sharing:', writeResult.uri);
 
-  // Save to device
-  await Filesystem.writeFile({
-    path: fileName,
-    data: pdfOutput.split(',')[1], // strip "data:application/pdf;base64,"
-    directory: Directory.Documents,
-    recursive: true
-  });
-
-  // Get the file URI
-  const fileUriResult = await Filesystem.getUri({
-    path: fileName,
-    directory: Directory.Documents,
-  });
-
-  // Share the file using the file URI
-  await Share.share({
-    title: 'Facio Faktura',
-    text: 'Här är din faktura',
-    url: fileUriResult.uri, // <-- Use the file URI here
-    dialogTitle: 'Dela Faktura'
-  });
+      await Share.share({
+        title: 'Facio Faktura',
+        text: 'Här är din faktura',
+        url: writeResult.uri, // Use the native file URI
+        dialogTitle: 'Dela Faktura'
+      });
+    } catch (err) {
+      console.error('Capacitor error:', err);
+    }
   } else {
     // Browser fallback: download the PDF
-    doc.save(`${language === 'sv' ? 'faktura' : 'invoice'}-${invoice.invoiceNumber}.pdf`);
+    doc.save(fileName);
+    saveInvoiceToHistory(invoice);
   }
 }

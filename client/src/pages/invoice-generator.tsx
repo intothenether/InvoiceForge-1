@@ -1,28 +1,76 @@
 import { useState } from "react";
-import { FileText, Stamp } from "lucide-react";
+import { FileText, Stamp, Settings, Folder } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { InvoiceForm } from "@/components/invoice-form";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
 import { Invoice } from "@shared/schema";
 
 export default function InvoiceGenerator() {
   const { t } = useLanguage();
+  const { toast } = useToast();
 
   const [invoice, setInvoice] = useState<Invoice>({
-    invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+    invoiceNumber: (() => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      return `${year}${month}${day}${hours}${minutes}`;
+    })(),
     clientName: "",
     clientEmail: "",
     services: [{ id: "1", name: "", type: "hourly", hours: 0, rate: 0 }],
     taxRate: 0.25,
     clientPersonnumber: "",
-    clientAddress: ""
+    clientAddress: "",
+    includeSkatterabatt: true
   });
 
   const handleInvoiceChange = (updatedInvoice: Invoice) => {
     setInvoice(updatedInvoice);
+  };
+
+  const openInvoiceFolder = async () => {
+    if (!window.electronAPI) return;
+
+    const businessConfig = JSON.parse(localStorage.getItem('businessConfig') || '{}');
+    const invoicePath = businessConfig.invoiceSavePath;
+
+    if (!invoicePath) {
+      toast({
+        title: "No Path Set",
+        description: "Please set the invoice save directory in Settings first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    await window.electronAPI.openDirectory(invoicePath);
+  };
+
+  const openStampedFolder = async () => {
+    if (!window.electronAPI) return;
+
+    const businessConfig = JSON.parse(localStorage.getItem('businessConfig') || '{}');
+    const stampedPath = businessConfig.stampedInvoiceSavePath;
+
+    if (!stampedPath) {
+      toast({
+        title: "No Path Set",
+        description: "Please set the stamped invoice save directory in Settings first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    await window.electronAPI.openDirectory(stampedPath);
   };
 
   return (
@@ -39,7 +87,24 @@ export default function InvoiceGenerator() {
                 {t.appTitle}
               </h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              {window.electronAPI && (
+                <>
+                  <Button variant="ghost" size="icon" onClick={openInvoiceFolder} title={t.invoiceFolder}>
+                    <Folder className="h-5 w-5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={openStampedFolder} title={t.stampedFolder}>
+                    <Folder className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
+              <Link href="/settings">
+                <Button variant="ghost" size="sm" data-testid="link-settings">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+              </Link>
               <Link href="/stamp-pdf">
                 <Button variant="outline" size="sm" data-testid="link-pdf-stamper">
                   <Stamp className="h-4 w-4 mr-2" />
@@ -63,7 +128,10 @@ export default function InvoiceGenerator() {
 
           {/* Preview Section */}
           <div className="w-full lg:w-1/2">
-            <InvoicePreview invoice={invoice} />
+            <InvoicePreview
+              invoice={invoice}
+              onInvoiceUpdate={handleInvoiceChange}
+            />
           </div>
         </div>
       </main>

@@ -4,3 +4,11 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# Build outputs
+release/
+MyApp-win32-x64/
+*.rar
+*.exe
+dist/
+build/
+out/

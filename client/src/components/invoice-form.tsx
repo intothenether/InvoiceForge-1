@@ -1,7 +1,7 @@
 import React from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, FileText, Download, Eye } from "lucide-react";
+import { Plus, Trash2, FileText, Download, Eye, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ClientSelector } from "@/components/client-selector";
 import { ClientStorage } from "@/lib/client-storage";
+import { getLastInvoiceForClient } from "@/lib/invoice-history";
 
 interface InvoiceFormProps {
   onInvoiceChange: (invoice: Invoice) => void;
@@ -23,17 +24,50 @@ interface InvoiceFormProps {
 export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
   const { toast } = useToast();
   const { t, language } = useLanguage();
-  
+
+  // Function to generate new invoice number (fallback)
+  const getFallbackInvoiceNumber = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `${year}${month}${day}${hours}${minutes}`;
+  };
+
+  // Async function to fetch next invoice number if configured
+  const fetchNextInvoiceNumber = async () => {
+    if (window.electronAPI) {
+      try {
+        const configStr = localStorage.getItem('businessConfig');
+        if (configStr) {
+          const config = JSON.parse(configStr);
+          if (config.useAutoInvoiceNumber && config.invoiceSavePath) {
+            const nextNum = await window.electronAPI.getNextInvoiceNumber(config.invoiceSavePath);
+            if (nextNum) {
+              return nextNum.toString();
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to get auto invoice number", e);
+      }
+    }
+    return null;
+  };
+
   const form = useForm<Invoice>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
-      invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+      invoiceNumber: getFallbackInvoiceNumber(),
       clientName: "",
       clientEmail: "",
       clientPersonnumber: "",
       clientAddress: "",
-      services: [{ id: "1", name: "", type: "hourly", hours: 1, rate: 0 }],
+      services: [{ id: "1", name: "Städning", type: "fixed", hours: 1, rate: 0 }],
       taxRate: 0.25,
+      includeSkatterabatt: true,
     },
     mode: "onChange",
   });
@@ -45,6 +79,17 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
 
   const watchedValues = form.watch();
 
+  // Initialize invoice number
+  React.useEffect(() => {
+    const initInvoiceNumber = async () => {
+      const autoNum = await fetchNextInvoiceNumber();
+      if (autoNum) {
+        form.setValue("invoiceNumber", autoNum);
+      }
+    };
+    initInvoiceNumber();
+  }, []);
+
   // Update parent component whenever form values change
   React.useEffect(() => {
     if (form.formState.isValid) {
@@ -53,12 +98,12 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
   }, [JSON.stringify(watchedValues), form.formState.isValid, onInvoiceChange]);
 
   const addService = () => {
-    append({ 
-      id: Date.now().toString(), 
-      name: "", 
+    append({
+      id: Date.now().toString(),
+      name: "",
       type: "hourly",
-      hours: 1, 
-      rate: 0 
+      hours: 1,
+      rate: 0
     });
   };
 
@@ -96,13 +141,60 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
     }
   };
 
-  const handleDownload = () => {
+  const handleLoadFromHistory = () => {
+    const clientName = watchedValues.clientName;
+    console.log('Loading history for client:', clientName);
+
+    if (!clientName.trim()) {
+      toast({
+        title: t.noInvoiceHistory,
+        description: "Please select a client first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const lastInvoice = getLastInvoiceForClient(clientName);
+    console.log('Found invoice:', lastInvoice);
+
+    if (!lastInvoice) {
+      toast({
+        title: t.noInvoiceHistory,
+        description: `No previous invoice found for ${clientName}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Populate form with last invoice data
+    console.log('Loading services:', lastInvoice.services);
+    form.setValue("services", lastInvoice.services);
+    form.setValue("taxRate", lastInvoice.taxRate);
+    form.setValue("includeSkatterabatt", lastInvoice.includeSkatterabatt);
+
+    toast({
+      title: t.invoiceHistoryLoaded,
+      description: `Loaded ${lastInvoice.services.length} services from invoice #${lastInvoice.invoiceNumber}`,
+    });
+  };
+
+  const handleDownload = async () => {
     if (form.formState.isValid) {
       try {
-        generateInvoicePDF(watchedValues, language);
+        await generateInvoicePDF(watchedValues, language);
         toast({
           title: t.pdfGenerated,
           description: t.downloadSuccessful,
+        });
+
+        // Generate new invoice number after successful download
+        const autoNum = await fetchNextInvoiceNumber();
+        const newInvoiceNumber = autoNum || getFallbackInvoiceNumber();
+        form.setValue("invoiceNumber", newInvoiceNumber);
+
+        toast({
+          title: "Invoice number updated",
+          description: `New invoice number: ${newInvoiceNumber}`,
         });
       } catch (error) {
         toast({
@@ -139,7 +231,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
               {t.clientInformation}
             </h3>
           </div>
-          
+
 
           <ClientSelector
             selectedClient={{
@@ -151,6 +243,21 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
             onClientSelect={handleClientSelect}
             onClientSave={handleClientSave}
           />
+
+          {/* Load from Last Invoice Button */}
+          {watchedValues.clientName && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleLoadFromHistory}
+              className="flex items-center gap-2 w-full"
+            >
+              <History className="h-4 w-4" />
+              {t.loadFromLastInvoice}
+            </Button>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="floating-label-input">
               <Input
@@ -165,7 +272,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                 </p>
               )}
             </div>
-            
+
             <div className="floating-label-input">
               <Input
                 {...form.register("clientEmail")}
@@ -196,7 +303,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                 </p>
               )}
             </div>
-            
+
             <div className="floating-label-input">
               <Input
                 {...form.register("clientAddress")}
@@ -268,7 +375,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                   </Button>
                 )}
               </div>
-              
+
               <div className="floating-label-input">
                 <Input
                   {...form.register(`services.${index}.name` as const)}
@@ -282,7 +389,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                   </p>
                 )}
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Label htmlFor={`service-type-${index}`} className="text-sm font-medium">
                   {t.serviceType}:
@@ -326,7 +433,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                       </p>
                     )}
                   </div>
-                  
+
                   <div className="floating-label-input">
                     <Input
                       {...form.register(`services.${index}.rate` as const, {
@@ -345,7 +452,7 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
                       </p>
                     )}
                   </div>
-                  
+
                   <div className="floating-label-input">
                     <Input
                       type="text"
@@ -412,11 +519,26 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
             </Select>
           </div>
         </div>
+
+        <Separator />
+
+        {/* Skatterabatt Section */}
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="include-skatterabatt"
+            checked={watchedValues.includeSkatterabatt}
+            onCheckedChange={(checked) => {
+              form.setValue("includeSkatterabatt", checked);
+            }}
+          />
+          <Label htmlFor="include-skatterabatt">{t.includeSkatterabatt}</Label>
+        </div>
+
         <Separator />
 
         {/* Action Buttons */}
         <div className="flex space-x-4 pt-6">
-          <Button
+          {/*<Button
             type="button"
             onClick={handlePreview}
             className="flex-1 flex items-center justify-center gap-2"
@@ -424,18 +546,18 @@ export function InvoiceForm({ onInvoiceChange }: InvoiceFormProps) {
           >
             <Eye className="h-4 w-4" />
             {t.previewInvoice}
-          </Button>
-          
+          </Button>*/}
+
           <Button
             type="button"
-            onClick={() => {
+            onClick={async () => {
               handleClientSave(
                 watchedValues.clientName,
                 watchedValues.clientEmail,
                 watchedValues.clientPersonnumber,
                 watchedValues.clientAddress
               );
-              handleDownload();
+              await handleDownload();
             }}
             className="flex-1 flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground"
             data-testid="button-download-pdf"

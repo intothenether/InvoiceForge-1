@@ -28,6 +28,7 @@ export const invoiceSchema = z.object({
   clientAddress: z.string().nonempty("Client address is required"),
   services: z.array(serviceSchema).min(1, "At least one service is required"),
   taxRate: z.number().min(0).max(1).default(0.25), // 25% default
+  includeSkatterabatt: z.boolean().default(true),
 });
 
 export type Service = z.infer<typeof serviceSchema>;
