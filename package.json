@@ -5,6 +5,7 @@
   "license": "MIT",
   "main": "main.js",
   "scripts": {
+    "build": "vite build",
     "dev:browser": "vite --host",
     "build:server": "node build-server.js",
     "build:all": "vite build && npm run build:server",
