@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Archive, Mail, Download, CheckCircle2, FileText, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Download, CheckCircle2, FileText, Send } from "lucide-react";
 import JSZip from "jszip";
 import {
   Dialog,
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { getBusinessConfig } from "@shared/config";
 
 export interface ProcessedBatchFile {
   name: string;
@@ -33,23 +34,37 @@ export function BatchCompressDialog({
 }: BatchCompressDialogProps) {
   const { toast } = useToast();
   const [emailRecipient, setEmailRecipient] = useState("");
-  const [emailSubject, setEmailSubject] = useState(
-    `Stamped Invoices - ${new Date().toLocaleDateString()}`
-  );
-  const [emailBody, setEmailBody] = useState(
-    `Hello,\n\nPlease find attached the stamped invoices archive.\n\nBest regards.`
-  );
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
   const [archiveFilename, setArchiveFilename] = useState(
     `stamped_invoices_${new Date().toISOString().split("T")[0]}.zip`
   );
   const [isCompressing, setIsCompressing] = useState(false);
+
+  // Populate email defaults from Settings whenever dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      const config = getBusinessConfig();
+      setEmailRecipient(config.defaultEmailRecipient || "");
+      setEmailSubject(
+        config.defaultEmailSubject ||
+          `Stamped Invoices - ${new Date().toLocaleDateString()}`
+      );
+      setEmailBody(
+        config.defaultEmailBody ||
+          `Hello,\n\nPlease find attached the stamped invoices archive.\n\nBest regards.`
+      );
+      setArchiveFilename(
+        `stamped_invoices_${new Date().toISOString().split("T")[0]}.zip`
+      );
+    }
+  }, [isOpen]);
 
   // Helper to generate JSZip blob
   const createZipBlob = async (): Promise<Blob> => {
     const zip = new JSZip();
 
     for (const file of processedFiles) {
-      // Strip data uri prefix if present
       const cleanBase64 = file.pdfBase64.includes(",")
         ? file.pdfBase64.split(",")[1]
         : file.pdfBase64;
@@ -68,13 +83,13 @@ export function BatchCompressDialog({
     try {
       const zipBlob = await createZipBlob();
 
-      // Trigger download
       const url = URL.createObjectURL(zipBlob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = archiveFilename.endsWith(".zip") || archiveFilename.endsWith(".rar")
-        ? archiveFilename
-        : `${archiveFilename}.zip`;
+      link.download =
+        archiveFilename.endsWith(".zip") || archiveFilename.endsWith(".rar")
+          ? archiveFilename
+          : `${archiveFilename}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -103,15 +118,17 @@ export function BatchCompressDialog({
     setIsCompressing(true);
     try {
       const zipBlob = await createZipBlob();
-      const filename = archiveFilename.endsWith(".zip") || archiveFilename.endsWith(".rar")
-        ? archiveFilename
-        : `${archiveFilename}.zip`;
+      const filename =
+        archiveFilename.endsWith(".zip") || archiveFilename.endsWith(".rar")
+          ? archiveFilename
+          : `${archiveFilename}.zip`;
 
       const fileToShare = new File([zipBlob], filename, {
         type: "application/zip",
       });
 
-      // Check Web Share API (Mobile / Safari)
+      // On Mobile / Safari supporting Web Share API:
+      // Attaches the .zip file directly into Apple Mail / Gmail app
       if (
         navigator.canShare &&
         navigator.canShare({ files: [fileToShare] })
@@ -125,17 +142,20 @@ export function BatchCompressDialog({
 
           toast({
             title: "Archive Shared!",
-            description: "Archive successfully opened in your share/email app.",
+            description: "Archive successfully attached and opened in your email/share app.",
           });
           onClose();
           return;
         } catch (shareErr) {
-          console.warn("Web Share failed, falling back to download & mailto:", shareErr);
+          console.warn(
+            "Web Share failed or was canceled, falling back to download & mailto:",
+            shareErr
+          );
         }
       }
 
-      // Fallback for Desktop / Standard Browsers:
-      // 1. Download the zip archive file
+      // On Desktop / Standard Browsers:
+      // 1. Save/download the archive file
       const url = URL.createObjectURL(zipBlob);
       const link = document.createElement("a");
       link.href = url;
@@ -145,17 +165,19 @@ export function BatchCompressDialog({
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      // 2. Open mailto link pre-filled with subject, recipient, body, and reminder to attach file
-      const mailtoBody = `${emailBody}\n\n[Note: Please attach the downloaded file '${filename}']`;
-      const mailtoUrl = `mailto:${encodeURIComponent(emailRecipient)}?subject=${encodeURIComponent(
+      // 2. Open mailto link pre-filled with subject, recipient, and body text
+      const mailtoBody = `${emailBody}\n\n[Note: Please attach the downloaded file '${filename}' from your Downloads folder]`;
+      const mailtoUrl = `mailto:${encodeURIComponent(
+        emailRecipient
+      )}?subject=${encodeURIComponent(
         emailSubject
       )}&body=${encodeURIComponent(mailtoBody)}`;
 
       window.location.href = mailtoUrl;
 
       toast({
-        title: "Archive Downloaded & Email Opened",
-        description: `Downloaded ${filename}. Your email app has opened—please attach the archive file.`,
+        title: "Archive Saved & Email Opened",
+        description: `Downloaded ${filename} to your device. Your email application has opened.`,
       });
 
       onClose();
@@ -180,8 +202,9 @@ export function BatchCompressDialog({
             <DialogTitle>Batch Stamping Complete!</DialogTitle>
           </div>
           <DialogDescription>
-            Successfully processed {processedFiles.length} PDF invoice{processedFiles.length !== 1 ? 's' : ''}.
-            Compress into an archive (.zip/.rar) to download or send by email.
+            Successfully processed {processedFiles.length} PDF invoice
+            {processedFiles.length !== 1 ? "s" : ""}. Compress into an archive
+            (.zip/.rar) to download or send by email.
           </DialogDescription>
         </DialogHeader>
 

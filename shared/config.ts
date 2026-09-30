@@ -7,6 +7,9 @@ export interface BusinessConfig {
   invoiceSavePath?: string;
   stampedInvoiceSavePath?: string;
   useAutoInvoiceNumber?: boolean;
+  defaultEmailRecipient?: string;
+  defaultEmailSubject?: string;
+  defaultEmailBody?: string;
 }
 
 export const defaultBusinessConfig: BusinessConfig = {
@@ -17,7 +20,10 @@ export const defaultBusinessConfig: BusinessConfig = {
   businessPlusgiro: "123456-7",
   invoiceSavePath: "",
   stampedInvoiceSavePath: "",
-  useAutoInvoiceNumber: false
+  useAutoInvoiceNumber: false,
+  defaultEmailRecipient: "",
+  defaultEmailSubject: "Stamped Invoices",
+  defaultEmailBody: "Hello,\n\nPlease find attached the stamped invoices archive.\n\nBest regards."
 };
 
 // For client-side storage
