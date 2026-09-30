@@ -15,12 +15,9 @@ export default defineConfig({
     },
   },
   root: path.resolve(__dirname, "client"),
-  base: "./", // Important for Electron
+  base: "./", // Works for GitHub Pages subpaths, Electron, and local dev
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
-    rollupOptions: {
-      external: ['@capacitor/filesystem'],
-    },
   },
 });

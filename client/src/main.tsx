@@ -1,10 +1,19 @@
 import { createRoot } from "react-dom/client";
-import { HashRouter } from "react-router-dom"; // 👈 import HashRouter
 import App from "./App";
 import "./index.css";
 
-createRoot(document.getElementById("root")!).render(
-  <HashRouter>         {/* 👈 wrap App */}
-    <App />
-  </HashRouter>
-);
+// Register Service Worker for PWA functionality
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").then(
+      (registration) => {
+        console.log("PWA ServiceWorker registered with scope: ", registration.scope);
+      },
+      (err) => {
+        console.log("PWA ServiceWorker registration failed: ", err);
+      }
+    );
+  });
+}
+
+createRoot(document.getElementById("root")!).render(<App />);
