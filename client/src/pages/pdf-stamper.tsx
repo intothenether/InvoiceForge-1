@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { addPaymentStampToPDF, previewPDFStamp, PaymentStamp } from "@/lib/pdf-stamper";
+import { BatchCompressDialog, ProcessedBatchFile } from "@/components/BatchCompressDialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -122,6 +123,7 @@ export default function PDFStamper() {
   const [batchFiles, setBatchFiles] = useState<{
     name: string,
     path: string,
+    fileObject?: File,
     paymentDate: string,
     paymentMethod: string,
     paymentReference: string
@@ -130,6 +132,12 @@ export default function PDFStamper() {
   const [batchStatus, setBatchStatus] = useState<'idle' | 'processing' | 'completed' | 'stopped'>('idle');
   const [batchLog, setBatchLog] = useState<string[]>([]);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+
+  // Dialog state for batch compression & emailing
+  const [processedBatchFiles, setProcessedBatchFiles] = useState<ProcessedBatchFile[]>([]);
+  const [showBatchCompressDialog, setShowBatchCompressDialog] = useState<boolean>(false);
+  const batchFileInputRef = useRef<HTMLInputElement>(null);
+
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Effect to update preview when selectedFileId changes in batch mode
@@ -178,6 +186,23 @@ export default function PDFStamper() {
             } finally {
               setIsGeneratingPreview(false);
             }
+          } else if (selectedBatchFile.fileObject) {
+            try {
+              setIsGeneratingPreview(true);
+              const stamp: PaymentStamp = {
+                date: new Date(selectedBatchFile.paymentDate),
+                method: selectedBatchFile.paymentMethod || undefined,
+                reference: selectedBatchFile.paymentReference || undefined,
+              };
+
+              const stampedPreview = await previewPDFStamp(selectedBatchFile.fileObject, stamp, t);
+              setPreviewUrl(stampedPreview);
+              setShowStampPreview(true);
+            } catch (error) {
+              console.error("Failed to generate preview for browser batch file:", error);
+            } finally {
+              setIsGeneratingPreview(false);
+            }
           }
         }
       }
@@ -186,29 +211,37 @@ export default function PDFStamper() {
     updateBatchPreview();
   }, [selectedFileId, isBatchMode, batchFiles, t]);
 
+  const handleBrowserBatchFilesSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const filesWithDetails = files.map(f => ({
+      name: f.name,
+      path: f.name,
+      fileObject: f,
+      paymentDate: today,
+      paymentMethod: "",
+      paymentReference: ""
+    }));
+
+    setBatchFiles(filesWithDetails);
+    setSelectedFileId(filesWithDetails[0].path);
+    setSourceDirectory(`${files.length} file(s) selected`);
+    setBatchStatus('idle');
+    setProcessedCount(0);
+    setBatchLog([]);
+
+    toast({
+      title: "Files Selected",
+      description: `Loaded ${files.length} PDF invoice(s) for batch stamping.`
+    });
+  };
+
   const handleFolderSelect = async () => {
     if (!window.electronAPI) {
-      console.log("Browser mode: Simulating folder selection");
-      setSourceDirectory("C:\\Mock\\Path\\To\\Invoices");
-      setBatchStatus('idle');
-      setProcessedCount(0);
-      const today = new Date().toISOString().split('T')[0];
-      const mockFiles = [
-        { name: "invoice_001.pdf", path: "mock/path/invoice_001.pdf", paymentDate: today, paymentMethod: "", paymentReference: "" },
-        { name: "invoice_002.pdf", path: "mock/path/invoice_002.pdf", paymentDate: today, paymentMethod: "", paymentReference: "" },
-        { name: "invoice_003.pdf", path: "mock/path/invoice_003.pdf", paymentDate: today, paymentMethod: "", paymentReference: "" },
-        { name: "invoice_004.pdf", path: "mock/path/invoice_004.pdf", paymentDate: today, paymentMethod: "", paymentReference: "" },
-        { name: "invoice_005.pdf", path: "mock/path/invoice_005.pdf", paymentDate: today, paymentMethod: "", paymentReference: "" },
-      ];
-      setBatchFiles(mockFiles);
-      setSelectedFileId(mockFiles[0].path);
-      setBatchLog([]);
-      setPaymentDate(today);
-
-      toast({
-        title: "Browser Testing Mode",
-        description: "Simulated folder selection with 5 mock files.",
-      });
+      // In browser / PWA mode, open multi-file selection dialog
+      batchFileInputRef.current?.click();
       return;
     }
 
@@ -264,6 +297,7 @@ export default function PDFStamper() {
     const { signal } = abortControllerRef.current;
 
     let processed = 0;
+    const newlyProcessed: ProcessedBatchFile[] = [];
 
     for (const file of batchFiles) {
       if (signal.aborted) {
@@ -280,39 +314,59 @@ export default function PDFStamper() {
           reference: file.paymentReference || undefined,
         };
 
-        // Read file
-        const base64Content = await window.electronAPI.readFile(file.path);
-        const binaryString = atob(base64Content);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        const arrayBuffer = bytes.buffer;
-
-        // Stamp
-        const { pdfBase64 } = await import("@/lib/pdf-stamper").then(m => m.stampPdfBuffer(arrayBuffer, stamp, t));
-
-        // Generate filename using same convention as single file mode
         const originalName = file.name.replace(/\.pdf$/i, '');
         const stampedFileName = `${originalName}_stamped_${Date.now()}.pdf`;
+        let pdfBase64Result = "";
 
-        // Get save directory from settings
-        const businessConfig = typeof window !== 'undefined'
-          ? JSON.parse(localStorage.getItem('businessConfig') || '{}')
-          : {};
+        if (window.electronAPI) {
+          const base64Content = await window.electronAPI.readFile(file.path);
+          const binaryString = atob(base64Content);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const arrayBuffer = bytes.buffer;
 
-        // Use configured save path or fallback to 'stamped' subdirectory
-        const saveDir = businessConfig.stampedInvoiceSavePath || `${sourceDirectory}\\stamped`;
-        const savePath = `${saveDir}\\${stampedFileName}`;
+          const { pdfBase64 } = await import("@/lib/pdf-stamper").then(m => m.stampPdfBuffer(arrayBuffer, stamp, t));
+          pdfBase64Result = pdfBase64;
 
-        const result = await window.electronAPI.saveFileSilent(savePath, pdfBase64, 'base64');
+          const businessConfig = typeof window !== 'undefined'
+            ? JSON.parse(localStorage.getItem('businessConfig') || '{}')
+            : {};
 
-        if (result.success) {
+          const saveDir = businessConfig.stampedInvoiceSavePath || `${sourceDirectory}\\stamped`;
+          const savePath = `${saveDir}\\${stampedFileName}`;
+
+          const result = await window.electronAPI.saveFileSilent(savePath, pdfBase64, 'base64');
+
+          if (result.success) {
+            processed++;
+            setProcessedCount(processed);
+            addToLog(`✓ Saved to: ${savePath}`);
+          } else {
+            addToLog(`✗ Failed to save ${file.name}: ${result.error}`);
+          }
+        } else {
+          // Web / Browser mode
+          let arrayBuffer: ArrayBuffer;
+          if (file.fileObject) {
+            arrayBuffer = await file.fileObject.arrayBuffer();
+          } else {
+            arrayBuffer = new ArrayBuffer(0);
+          }
+
+          const { pdfBase64 } = await import("@/lib/pdf-stamper").then(m => m.stampPdfBuffer(arrayBuffer, stamp, t));
+          pdfBase64Result = pdfBase64;
           processed++;
           setProcessedCount(processed);
-          addToLog(`✓ Saved to: ${savePath}`);
-        } else {
-          addToLog(`✗ Failed to save ${file.name}: ${result.error}`);
+          addToLog(`✓ Stamped: ${file.name}`);
+        }
+
+        if (pdfBase64Result) {
+          newlyProcessed.push({
+            name: stampedFileName,
+            pdfBase64: pdfBase64Result,
+          });
         }
 
       } catch (err) {
@@ -323,7 +377,10 @@ export default function PDFStamper() {
 
     setIsProcessing(false);
     setBatchStatus(signal.aborted ? 'stopped' : 'completed');
-    if (!signal.aborted) {
+
+    if (!signal.aborted && newlyProcessed.length > 0) {
+      setProcessedBatchFiles(newlyProcessed);
+      setShowBatchCompressDialog(true);
       toast({
         title: "Batch Complete",
         description: `Successfully processed ${processed} of ${batchFiles.length} files.`
@@ -817,6 +874,23 @@ export default function PDFStamper() {
           </div>
         </div>
       </main>
+
+      {/* Hidden Multi-file input for batch selection in browser mode */}
+      <input
+        type="file"
+        ref={batchFileInputRef}
+        multiple
+        accept=".pdf"
+        className="hidden"
+        onChange={handleBrowserBatchFilesSelect}
+      />
+
+      {/* Batch Compression & Email Dialog */}
+      <BatchCompressDialog
+        isOpen={showBatchCompressDialog}
+        onClose={() => setShowBatchCompressDialog(false)}
+        processedFiles={processedBatchFiles}
+      />
     </div>
   );
 }
